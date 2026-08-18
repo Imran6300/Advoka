@@ -1,0 +1,108 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Advoka MVP UI/UX Design System — §32 Design tokens (final source of truth) */
+:root {
+  --background: #0b0d12;
+  --surface: #11141b;
+  --surface-elevated: #171b24;
+  --border: #252a36;
+
+  --primary: #5b5bd6;
+  --primary-hover: #4f46c5;
+  --primary-soft: #eef0ff;
+  --ai-accent: #8b7cf6;
+
+  --text-primary: #f5f7fa;
+  --text-secondary: #a7adbb;
+  --text-muted: #6f7685;
+
+  --success: #34d399;
+  --warning: #fbbf24;
+  --error: #fb7185;
+  --info: #38bdf8;
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+}
+
+* {
+  border-color: var(--border);
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--text-primary);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Restrained, intentional focus ring — never remove outline without replacing it (§25) */
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+::selection {
+  background-color: var(--primary);
+  color: var(--text-primary);
+}
+
+/* Subtle scrollbar in keeping with the calm, restrained surface */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: var(--border);
+  border-radius: 999px;
+  border: 2px solid var(--background);
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--text-muted);
+}
+
+/* §21 Loading states — skeleton shimmer using only the two dark surface tones */
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--surface) 25%,
+    var(--surface-elevated) 50%,
+    var(--surface) 75%
+  );
+  background-size: 200% 100%;
+}
+
+/* §18 AI visual language — the one gradient reserved for "this is Advoka intelligence" */
+.ai-gradient-text {
+  background: linear-gradient(90deg, var(--primary), var(--ai-accent));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.ai-gradient-bg {
+  background: linear-gradient(135deg, var(--primary), var(--ai-accent));
+}
+
+/* §25 Accessibility — respect prefers-reduced-motion globally */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
