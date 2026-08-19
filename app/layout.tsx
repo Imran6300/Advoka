@@ -3,6 +3,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import { manrope } from "@/lib/fonts";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryProvider } from "@/components/providers/query-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -48,10 +49,12 @@ export default function RootLayout({
     >
       <html lang="en" className={manrope.variable}>
         <body className="min-h-screen bg-background font-sans antialiased">
-          <TooltipProvider delayDuration={150}>
-            {children}
-            <Toaster />
-          </TooltipProvider>
+          <QueryProvider>
+            <TooltipProvider delayDuration={150}>
+              {children}
+              <Toaster />
+            </TooltipProvider>
+          </QueryProvider>
         </body>
       </html>
     </ClerkProvider>
