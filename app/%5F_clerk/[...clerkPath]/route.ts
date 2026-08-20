@@ -2,12 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 // Manually proxies requests to Clerk's Frontend API so advoka-self.vercel.app
 // can serve as the Clerk domain without a CNAME (not possible on *.vercel.app).
-// Equivalent to Clerk's built-in frontendApiProxy option, which requires
-// @clerk/nextjs v7 + Next.js >=15.2.3 — written manually here since this repo
-// is on @clerk/nextjs v6 + Next.js 14.
 //
-// Mirrors the nginx example in Clerk's docs:
-// https://clerk.com/docs/guides/dashboard/dns-domains/proxy-fapi
+// IMPORTANT: this folder is named "%5F_clerk" (URL-encoded leading underscore),
+// NOT "__clerk". Next.js App Router treats any folder starting with a literal
+// "_" as a private folder and excludes it from routing entirely — which is
+// why the plain "__clerk" folder never showed up in the build's route list.
+// "%5F" decodes to "_" in the URL but isn't treated as the private-folder
+// prefix by Next's router, so this still resolves to the public /__clerk/*
+// path Clerk expects.
+// https://nextjs.org/docs/app/building-your-application/routing#private-folders
 
 const CLERK_FRONTEND_API = "https://frontend-api.clerk.dev";
 
@@ -19,8 +22,6 @@ async function proxy(req: NextRequest, path: string[]) {
   forwardHeaders.delete("host");
   forwardHeaders.delete("connection");
 
-  // Identifies this instance to Clerk and tells it what public URL
-  // it's being proxied through — required on every proxied request.
   forwardHeaders.set(
     "Clerk-Proxy-Url",
     `${req.nextUrl.protocol}//${req.nextUrl.host}/__clerk`
