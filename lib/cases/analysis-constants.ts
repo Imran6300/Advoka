@@ -56,3 +56,22 @@ export const DRAFT_TEMPLATE_TYPES = [
   "application",
 ] as const;
 export type DraftTemplateType = (typeof DRAFT_TEMPLATE_TYPES)[number];
+
+export const DRAFT_TEMPLATE_LABEL: Record<DraftTemplateType, string> = {
+  legal_notice: "Legal Notice",
+  client_email: "Client Email",
+  case_summary: "Case Summary",
+  reply_to_notice: "Reply to Notice",
+  application: "Application",
+};
+
+export const DRAFT_TEMPLATE_DESCRIPTION: Record<DraftTemplateType, string> = {
+  legal_notice: "A formal notice to the opposing party, grounded in the case's facts and evidence.",
+  client_email: "A plain-English update for your client — what's happened and what's next.",
+  case_summary: "An internal summary memo covering background, key facts, issues, and current status.",
+  reply_to_notice: "A formal written response to a notice received from the opposing party.",
+  application: "A formal application or petition built from the case's facts and your instructions.",
+};
+
+export const DRAFT_STATUSES = ["pending", "ready", "failed"] as const;
+export type DraftStatus = (typeof DRAFT_STATUSES)[number];

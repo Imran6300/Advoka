@@ -20,6 +20,13 @@ type Events = {
       ownerId: string;
     };
   };
+  "draft.generate.requested": {
+    data: {
+      draftId: string;
+      caseId: string;
+      ownerId: string;
+    };
+  };
 };
 
 export const inngest = new Inngest({

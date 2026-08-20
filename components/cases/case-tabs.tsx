@@ -1,16 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import {
-  MessageSquare,
-  PenLine,
-  Clock,
-} from "lucide-react";
+import { Clock } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DocumentsPanel } from "@/components/documents/documents-panel";
 import { OverviewTab } from "@/components/cases/overview-tab";
 import { GraphTab } from "@/components/cases/graph-tab";
+import { ChatTab } from "@/components/chat/chat-panel";
+import { DraftsTab } from "@/components/cases/drafts-tab";
 import type { CaseStatusResponse } from "@/lib/hooks/use-case-status";
 import type { CaseAnalysisResponse } from "@/lib/cases/analysis-types";
 
@@ -77,19 +75,15 @@ export function CaseTabs({
       </TabsContent>
 
       <TabsContent value="chat">
-        <EmptyState
-          icon={<MessageSquare className="h-5 w-5 text-text-muted" />}
-          title="Ask Advoka about this case"
-          description="Once documents are uploaded and analyzed, ask questions and get answers cited straight to the source page."
+        <ChatTab
+          caseId={caseId}
+          hasExtractedDocuments={hasExtractedDocuments}
+          onNavigateToDocuments={() => setActiveTab("documents")}
         />
       </TabsContent>
 
       <TabsContent value="drafts">
-        <EmptyState
-          icon={<PenLine className="h-5 w-5 text-text-muted" />}
-          title="No drafts yet"
-          description="Generate a legal notice, client email, case summary, or reply from a template once your case has been analyzed."
-        />
+        <DraftsTab caseId={caseId} />
       </TabsContent>
     </Tabs>
   );
