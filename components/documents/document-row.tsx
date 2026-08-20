@@ -30,12 +30,13 @@ export interface DocumentRowData {
 /** §8 — subtle animated progress indicator, never a generic spinner. */
 function ProcessingIndicator() {
   return (
-    <div className="h-1 w-full overflow-hidden rounded-full bg-surface-elevated">
+    <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
       <motion.div
-        className="h-full w-1/3 rounded-full bg-ai-accent"
+        className="ai-gradient-bg-animated absolute inset-y-0 w-1/3 animate-gradient-x rounded-full"
         animate={{ x: ["-100%", "220%"] }}
         transition={{ duration: 1.4, repeat: Infinity, ease: [0.2, 0.8, 0.2, 1] }}
       />
+      <div className="absolute inset-0 animate-sweep bg-gradient-to-r from-transparent via-white/10 to-transparent" />
     </div>
   );
 }

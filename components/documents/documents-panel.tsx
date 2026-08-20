@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
 import { UploadCloud } from "lucide-react";
 import { DocumentUploader, type UploadingFile } from "@/components/documents/document-uploader";
 import { DocumentRow, type DocumentRowData } from "@/components/documents/document-row";
@@ -82,17 +83,32 @@ export function DocumentsPanel({
         />
       ) : (
         <div className="flex flex-col gap-2">
-          {uploadingRows.map((row) => (
-            <DocumentRow key={row._id} document={row} />
-          ))}
-          {documents.map((doc) => (
-            <DocumentRow
-              key={doc._id}
-              document={doc}
-              onRetry={handleRetry}
-              retrying={retryingId === doc._id}
-            />
-          ))}
+          <AnimatePresence initial={false}>
+            {uploadingRows.map((row) => (
+              <motion.div
+                key={row._id}
+                layout
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
+              >
+                <DocumentRow document={row} />
+              </motion.div>
+            ))}
+            {documents.map((doc) => (
+              <motion.div
+                key={doc._id}
+                layout
+                initial={{ opacity: 0, y: -6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
+              >
+                <DocumentRow document={doc} onRetry={handleRetry} retrying={retryingId === doc._id} />
+              </motion.div>
+            ))}
+          </AnimatePresence>
         </div>
       )}
     </div>

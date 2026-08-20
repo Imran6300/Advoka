@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AIDotWave } from "@/components/ui/ai-loader";
 import { ChatMessageBubble } from "@/components/chat/chat-message";
 import { useCaseChat } from "@/lib/hooks/use-case-chat";
 import type { CitationRef } from "@/lib/cases/analysis-types";
@@ -97,18 +99,28 @@ export function ChatTab({
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {messages.map((m) => (
-              <ChatMessageBubble key={m._id} message={m} onViewSource={handleViewSource} />
-            ))}
+            <AnimatePresence initial={false}>
+              {messages.map((m) => (
+                <motion.div
+                  key={m._id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.22, ease: [0.2, 0.8, 0.2, 1] }}
+                >
+                  <ChatMessageBubble message={m} onViewSource={handleViewSource} />
+                </motion.div>
+              ))}
+            </AnimatePresence>
             {isSending && (
-              <div className="flex items-center gap-2 pl-8 text-[12.5px] text-text-muted">
-                <span className="flex gap-1">
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ai-accent [animation-delay:-0.3s]" />
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ai-accent [animation-delay:-0.15s]" />
-                  <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-ai-accent" />
-                </span>
+              <motion.div
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
+                className="flex items-center gap-2.5 pl-8 text-[12.5px] text-text-muted"
+              >
+                <AIDotWave />
                 Advoka is reading the case documents
-              </div>
+              </motion.div>
             )}
           </div>
         )}

@@ -104,6 +104,34 @@ const config: Config = {
           "0%": { backgroundPosition: "-200% 0" },
           "100%": { backgroundPosition: "200% 0" },
         },
+        /* §19 extension — delay-state motion vocabulary (Inngest-backed
+           processing steps: document extraction, case analysis, graph
+           build, draft generation). Reuses only existing tokens. */
+        "pulse-ring": {
+          "0%": { transform: "scale(0.72)", opacity: "0.55" },
+          "80%": { transform: "scale(1.35)", opacity: "0" },
+          "100%": { transform: "scale(1.35)", opacity: "0" },
+        },
+        "spin-slow": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
+        "spin-reverse-slow": {
+          from: { transform: "rotate(360deg)" },
+          to: { transform: "rotate(0deg)" },
+        },
+        "gradient-x": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
+        "dot-wave": {
+          "0%, 60%, 100%": { transform: "translateY(0)", opacity: "0.4" },
+          "30%": { transform: "translateY(-3px)", opacity: "1" },
+        },
+        "sweep": {
+          "0%": { transform: "translateX(-120%)" },
+          "100%": { transform: "translateX(320%)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 200ms ease-out",
@@ -111,6 +139,12 @@ const config: Config = {
         "ai-glow": "ai-glow 3s ease-in-out infinite",
         "toast-in": "toast-in 220ms cubic-bezier(0.2, 0.8, 0.2, 1)",
         shimmer: "shimmer 2.2s ease-in-out infinite",
+        "pulse-ring": "pulse-ring 2.2s cubic-bezier(0.2, 0.8, 0.2, 1) infinite",
+        "spin-slow": "spin-slow 3.6s linear infinite",
+        "spin-reverse-slow": "spin-reverse-slow 5.2s linear infinite",
+        "gradient-x": "gradient-x 3s ease infinite",
+        "dot-wave": "dot-wave 1.3s ease-in-out infinite",
+        sweep: "sweep 1.6s cubic-bezier(0.2, 0.8, 0.2, 1) infinite",
       },
     },
   },

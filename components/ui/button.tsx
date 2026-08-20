@@ -10,12 +10,12 @@ const buttonVariants = cva(
     variants: {
       variant: {
         primary:
-          "bg-primary text-text-primary shadow-sm hover:bg-primary-hover active:scale-[0.98]",
+          "bg-primary text-text-primary shadow-sm transition-transform hover:bg-primary-hover hover:-translate-y-px hover:shadow-md active:scale-[0.98] active:translate-y-0",
         secondary:
           "bg-surface-elevated text-text-primary border border-border hover:border-text-muted active:scale-[0.98]",
         ghost:
           "text-text-secondary hover:bg-surface-elevated hover:text-text-primary",
-        ai: "ai-gradient-bg text-text-primary shadow-sm hover:brightness-110 active:scale-[0.98]",
+        ai: "ai-gradient-bg text-text-primary shadow-sm transition-transform hover:brightness-110 hover:-translate-y-px hover:shadow-md active:scale-[0.98] active:translate-y-0",
         destructive:
           "bg-error/10 text-error border border-error/30 hover:bg-error/20",
         link: "text-primary underline-offset-4 hover:underline",

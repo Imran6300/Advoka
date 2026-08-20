@@ -1,8 +1,9 @@
 "use client";
 
-import { Network, Sparkles, RefreshCw, Loader2 } from "lucide-react";
+import { Network, Sparkles, RefreshCw } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AIWorkingBlock } from "@/components/ui/ai-loader";
 import { CaseGraphView } from "@/components/graph/CaseGraphView";
 import { useCaseGraph } from "@/lib/hooks/use-case-graph";
 import { MIN_GRAPH_NODES_TO_RENDER } from "@/lib/cases/graph-constants";
@@ -122,8 +123,7 @@ export function GraphTab({
   // flipped Case.status to "ready" yet — a short, real window, not a fake wait.
   if (graph && graph.caseStatus !== "ready") {
     return (
-      <EmptyState
-        icon={<Loader2 className="h-5 w-5 animate-spin text-ai-accent" />}
+      <AIWorkingBlock
         title="Building your case graph"
         description="Advoka is mapping the relationships between people, evidence, and contradictions in this case. This usually takes a few seconds."
       />

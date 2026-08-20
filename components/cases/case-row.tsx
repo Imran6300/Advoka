@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -29,21 +32,23 @@ function formatRelativeDate(date: string | Date) {
 export function CaseRow({ caseData }: { caseData: CaseRowData }) {
   return (
     <Link href={`/cases/${caseData._id}`} className="block">
-      <Card className="transition-colors duration-card ease-advoka hover:border-text-muted">
-        <CardContent className="flex items-center gap-4 p-4">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[14px] font-medium text-text-primary">{caseData.title}</p>
-            <p className="mt-0.5 truncate text-[13px] text-text-secondary">
-              {caseData.caseType} · {caseData.clientName}
+      <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}>
+        <Card className="transition-all duration-card ease-advoka hover:border-text-muted hover:shadow-md">
+          <CardContent className="flex items-center gap-4 p-4">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[14px] font-medium text-text-primary">{caseData.title}</p>
+              <p className="mt-0.5 truncate text-[13px] text-text-secondary">
+                {caseData.caseType} · {caseData.clientName}
+              </p>
+            </div>
+            <p className="hidden shrink-0 text-[12.5px] text-text-muted sm:block">
+              Updated {formatRelativeDate(caseData.updatedAt)}
             </p>
-          </div>
-          <p className="hidden shrink-0 text-[12.5px] text-text-muted sm:block">
-            Updated {formatRelativeDate(caseData.updatedAt)}
-          </p>
-          <StatusBadge status={caseData.status} className="shrink-0" />
-          <ChevronRight className="h-4 w-4 shrink-0 text-text-muted" />
-        </CardContent>
-      </Card>
+            <StatusBadge status={caseData.status} className="shrink-0" />
+            <ChevronRight className="h-4 w-4 shrink-0 text-text-muted transition-transform duration-hover ease-advoka group-hover:translate-x-0.5" />
+          </CardContent>
+        </Card>
+      </motion.div>
     </Link>
   );
 }

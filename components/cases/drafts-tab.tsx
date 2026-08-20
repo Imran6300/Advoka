@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { PenLine, Loader2, Plus, ArrowLeft, AlertCircle as AlertCircleIcon } from "lucide-react";
+import { PenLine, Plus, ArrowLeft, AlertCircle as AlertCircleIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
+import { AIWorkingBlock } from "@/components/ui/ai-loader";
 import { useToast } from "@/components/ui/use-toast";
 import { DraftTemplatePicker } from "@/components/drafts/draft-template-picker";
 import { DraftReview } from "@/components/drafts/draft-review";
@@ -140,11 +141,10 @@ export function DraftsTab({ caseId }: { caseId: string }) {
 
   if (step === "generating") {
     return (
-      <div className="flex flex-col items-center justify-center gap-3 rounded-lg border border-border bg-surface py-16">
-        <Loader2 className="h-5 w-5 animate-spin text-ai-accent" />
-        <p className="text-[13px] text-text-secondary">Drafting your {template && DRAFT_TEMPLATE_LABEL[template]}…</p>
-        <p className="text-[12px] text-text-muted">This usually takes 10–20 seconds.</p>
-      </div>
+      <AIWorkingBlock
+        title={`Drafting your ${template ? DRAFT_TEMPLATE_LABEL[template] : "document"}…`}
+        description="This usually takes 10–20 seconds."
+      />
     );
   }
 

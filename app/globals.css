@@ -95,6 +95,40 @@ body {
   background: linear-gradient(135deg, var(--primary), var(--ai-accent));
 }
 
+/* §18 extension — animated variant of the AI gradient, reserved for the
+   same "this is Advoka intelligence" moments as .ai-gradient-bg, just in
+   motion. Background-size must stay > 100% for gradient-x to have room
+   to travel. */
+.ai-gradient-bg-animated {
+  background: linear-gradient(
+    120deg,
+    var(--primary),
+    var(--ai-accent),
+    var(--primary)
+  );
+  background-size: 200% 200%;
+}
+
+/* §9/§8 AI processing rings — the conic sweep used behind the AILoader
+   orb wherever a real Inngest job is running (analysis, graph build,
+   draft generation). Two colors only, matching the AI accent language. */
+.ai-conic-ring {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    var(--ai-accent) 35%,
+    transparent 55%
+  );
+}
+.ai-conic-ring-reverse {
+  background: conic-gradient(
+    from 180deg,
+    transparent 0%,
+    var(--primary) 40%,
+    transparent 60%
+  );
+}
+
 /* §25 Accessibility — respect prefers-reduced-motion globally */
 @media (prefers-reduced-motion: reduce) {
   *,
