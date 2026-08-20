@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { LayoutDashboard, Scale, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -12,29 +13,36 @@ const NAV_ITEMS = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-/**
- * The actual nav content, shared between the persistent desktop `Sidebar`
- * and the mobile slide-in drawer (`mobile-app-shell.tsx`) — one definition,
- * two shells, so nav items never drift out of sync between breakpoints.
- */
 export function SidebarNav() {
   const pathname = usePathname();
 
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-16 items-center gap-2 px-5">
-        <div className="ai-gradient-bg flex h-7 w-7 items-center justify-center rounded-sm text-[13px] font-bold text-text-primary">
-          A
-        </div>
-        <span className="text-[15px] font-bold tracking-tight text-text-primary">
-          Advoka
-        </span>
+        <Link href="/dashboard" className="flex items-center gap-2">
+          <Image
+            src="/logo.png"
+            alt="Advoka"
+            width={28}
+            height={28}
+            className="h-7 w-7 rounded-sm object-contain"
+            priority
+          />
+
+          <span className="text-[15px] font-bold tracking-tight text-text-primary">
+            Advoka
+          </span>
+        </Link>
       </div>
 
       <nav aria-label="Primary" className="flex-1 space-y-0.5 px-3 py-2">
         {NAV_ITEMS.map((item) => {
-          const active = pathname === item.href || pathname?.startsWith(item.href + "/");
+          const active =
+            pathname === item.href ||
+            pathname?.startsWith(item.href + "/");
+
           const Icon = item.icon;
+
           return (
             <Link
               key={item.href}
@@ -50,9 +58,12 @@ export function SidebarNav() {
               <Icon
                 className={cn(
                   "h-[17px] w-[17px] shrink-0 transition-colors duration-hover",
-                  active ? "text-primary" : "text-text-muted group-hover:text-text-secondary"
+                  active
+                    ? "text-primary"
+                    : "text-text-muted group-hover:text-text-secondary"
                 )}
               />
+
               {item.label}
             </Link>
           );
@@ -66,7 +77,6 @@ export function SidebarNav() {
   );
 }
 
-/** Persistent desktop rail — hidden below `lg`, where the mobile drawer takes over. */
 export function Sidebar() {
   return (
     <aside className="hidden h-screen w-60 shrink-0 flex-col border-r border-border bg-surface lg:flex">
