@@ -27,38 +27,45 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider
-      appearance={{
-        variables: {
-          colorPrimary: "#5B5BD6",
-          colorBackground: "#0B0D12",
-          colorInputBackground: "#171B24",
-          colorInputText: "#F5F7FA",
-          colorText: "#F5F7FA",
-          colorTextSecondary: "#A7ADBB",
-          colorNeutral: "#F5F7FA",
-          colorDanger: "#FB7185",
-          colorSuccess: "#34D399",
-          borderRadius: "8px",
-          fontFamily: "var(--font-manrope), sans-serif",
-        },
-        elements: {
-          card: "bg-surface border border-border shadow-xl",
-          headerTitle: "text-text-primary",
-          headerSubtitle: "text-text-secondary",
-          socialButtonsBlockButton: "border border-border bg-surface-elevated hover:bg-surface-elevated/70",
-          formButtonPrimary: "bg-primary hover:bg-primary-hover text-sm normal-case",
-          footerActionLink: "text-primary hover:text-primary-hover",
-          formFieldInput: "bg-surface-elevated border-border text-text-primary",
-          formFieldLabel: "text-text-secondary",
-          identityPreviewEditButton: "text-primary",
-          dividerLine: "bg-border",
-          dividerText: "text-text-muted",
-        },
-      }}
-    >
-      <html lang="en" className={manrope.variable}>
-        <body className="min-h-screen bg-background font-sans antialiased">
+    <html lang="en" className={manrope.variable}>
+      <body className="min-h-screen bg-background font-sans antialiased">
+        {/*
+          `dynamic` restores Clerk v5's default behavior. Without it, Next 14
+          tries to statically prerender every route (v6 no longer forces
+          dynamic rendering), which crashes with "window is not defined"
+          because Clerk's SSR path isn't safe to run during static export.
+        */}
+        <ClerkProvider
+          dynamic
+          appearance={{
+            variables: {
+              colorPrimary: "#5B5BD6",
+              colorBackground: "#0B0D12",
+              colorInputBackground: "#171B24",
+              colorInputText: "#F5F7FA",
+              colorText: "#F5F7FA",
+              colorTextSecondary: "#A7ADBB",
+              colorNeutral: "#F5F7FA",
+              colorDanger: "#FB7185",
+              colorSuccess: "#34D399",
+              borderRadius: "8px",
+              fontFamily: "var(--font-manrope), sans-serif",
+            },
+            elements: {
+              card: "bg-surface border border-border shadow-xl",
+              headerTitle: "text-text-primary",
+              headerSubtitle: "text-text-secondary",
+              socialButtonsBlockButton: "border border-border bg-surface-elevated hover:bg-surface-elevated/70",
+              formButtonPrimary: "bg-primary hover:bg-primary-hover text-sm normal-case",
+              footerActionLink: "text-primary hover:text-primary-hover",
+              formFieldInput: "bg-surface-elevated border-border text-text-primary",
+              formFieldLabel: "text-text-secondary",
+              identityPreviewEditButton: "text-primary",
+              dividerLine: "bg-border",
+              dividerText: "text-text-muted",
+            },
+          }}
+        >
           <QueryProvider>
             <MotionProvider>
               <TooltipProvider delayDuration={150}>
@@ -67,8 +74,8 @@ export default function RootLayout({
               </TooltipProvider>
             </MotionProvider>
           </QueryProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+        </ClerkProvider>
+      </body>
+    </html>
   );
 }
