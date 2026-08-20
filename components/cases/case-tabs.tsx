@@ -3,17 +3,16 @@
 import { useState } from "react";
 import {
   MessageSquare,
-  Network,
   PenLine,
-  Sparkles,
-  UploadCloud,
   Clock,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { DocumentsPanel } from "@/components/documents/documents-panel";
+import { OverviewTab } from "@/components/cases/overview-tab";
+import { GraphTab } from "@/components/cases/graph-tab";
 import type { CaseStatusResponse } from "@/lib/hooks/use-case-status";
+import type { CaseAnalysisResponse } from "@/lib/cases/analysis-types";
 
 const TABS = [
   { value: "overview", label: "Overview" },
@@ -27,11 +26,14 @@ const TABS = [
 export function CaseTabs({
   caseId,
   initialStatus,
+  initialAnalysis,
 }: {
   caseId: string;
   initialStatus: CaseStatusResponse;
+  initialAnalysis: CaseAnalysisResponse | null;
 }) {
   const [activeTab, setActiveTab] = useState<string>("overview");
+  const hasExtractedDocuments = initialStatus.documents.some((d) => d.status === "extracted");
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col gap-4">
@@ -44,16 +46,11 @@ export function CaseTabs({
       </TabsList>
 
       <TabsContent value="overview">
-        <EmptyState
-          icon={<Sparkles className="h-5 w-5 text-text-muted" />}
-          title="No case intelligence yet"
-          description="Upload documents and Advoka will generate an AI summary, key facts, contradictions, missing information, and a timeline — every claim backed by a source."
-          action={
-            <Button variant="ai" onClick={() => setActiveTab("documents")}>
-              <UploadCloud className="h-4 w-4" />
-              Upload Documents
-            </Button>
-          }
+        <OverviewTab
+          caseId={caseId}
+          hasExtractedDocuments={hasExtractedDocuments}
+          initialAnalysis={initialAnalysis}
+          onNavigateToDocuments={() => setActiveTab("documents")}
         />
       </TabsContent>
 
@@ -70,10 +67,12 @@ export function CaseTabs({
       </TabsContent>
 
       <TabsContent value="graph">
-        <EmptyState
-          icon={<Network className="h-5 w-5 text-text-muted" />}
-          title="Not enough cross-referenced entities yet"
-          description="Upload more documents so Advoka can map the people, evidence, and contradictions in this case."
+        <GraphTab
+          caseId={caseId}
+          hasExtractedDocuments={hasExtractedDocuments}
+          initialAnalysisStatus={initialAnalysis?.status ?? "not_started"}
+          onNavigateToOverview={() => setActiveTab("overview")}
+          onNavigateToDocuments={() => setActiveTab("documents")}
         />
       </TabsContent>
 

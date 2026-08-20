@@ -4,6 +4,7 @@ import { CaseTabs } from "@/components/cases/case-tabs";
 import { getOwner } from "@/lib/auth/getOwner";
 import { getCaseForOwner } from "@/lib/db/queries/cases";
 import { listDocumentsForCase } from "@/lib/db/queries/documents";
+import { getCaseAnalysisResponse } from "@/lib/db/queries/analysis";
 import type { CaseStatusResponse } from "@/lib/hooks/use-case-status";
 
 export default async function CaseDetailPage({ params }: { params: { id: string } }) {
@@ -14,7 +15,10 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
     notFound();
   }
 
-  const documents = await listDocumentsForCase(owner, params.id);
+  const [documents, initialAnalysis] = await Promise.all([
+    listDocumentsForCase(owner, params.id),
+    getCaseAnalysisResponse(owner, params.id),
+  ]);
 
   const initialStatus: CaseStatusResponse = {
     caseStatus: caseDoc.status,
@@ -43,7 +47,7 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
           status: caseDoc.status,
         }}
       />
-      <CaseTabs caseId={params.id} initialStatus={initialStatus} />
+      <CaseTabs caseId={params.id} initialStatus={initialStatus} initialAnalysis={initialAnalysis} />
     </div>
   );
 }

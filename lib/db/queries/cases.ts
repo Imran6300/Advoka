@@ -1,6 +1,7 @@
 import { Types } from "mongoose";
 import { connectDB } from "@/lib/db/connect";
 import { Case, type ICase } from "@/lib/db/models/Case";
+import { Deadline } from "@/lib/db/models/Deadline";
 import type { IUser } from "@/lib/db/models/User";
 
 export interface CreateCaseInput {
@@ -52,12 +53,16 @@ export async function getDashboardStatsForOwner(owner: IUser): Promise<Dashboard
   await connectDB();
   const cases = await Case.find({ ownerId: owner._id }).sort({ updatedAt: -1 }).lean<ICase[]>();
 
+  const upcomingDeadlines = await Deadline.countDocuments({
+    ownerId: owner._id,
+    dueDate: { $gte: new Date() },
+  });
+
   return {
     activeCases: cases.length,
     documentsProcessed: cases.reduce((sum, c) => sum + (c.stats?.documentsCount ?? 0), 0),
     contradictionsFound: cases.reduce((sum, c) => sum + (c.stats?.contradictionsCount ?? 0), 0),
-    // Deadline tracking lands with the AI Case Analyzer on Day 4 — zeroed until then.
-    upcomingDeadlines: 0,
+    upcomingDeadlines,
     recentCases: cases.slice(0, 5),
   };
 }

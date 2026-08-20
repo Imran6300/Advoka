@@ -8,6 +8,18 @@ type Events = {
       ownerId: string;
     };
   };
+  "case.analyze.requested": {
+    data: {
+      caseId: string;
+      ownerId: string;
+    };
+  };
+  "case.graph.build": {
+    data: {
+      caseId: string;
+      ownerId: string;
+    };
+  };
 };
 
 export const inngest = new Inngest({
