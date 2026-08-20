@@ -8,15 +8,27 @@ const isProtectedRoute = createRouteMatcher([
   "/api/((?!inngest|webhooks).*)",
 ]);
 
-export default clerkMiddleware(async (auth, req) => {
-  if (isProtectedRoute(req)) {
-    await auth.protect();
+export default clerkMiddleware(
+  async (auth, req) => {
+    if (isProtectedRoute(req)) {
+      await auth.protect();
+    }
+  },
+  {
+    // Required because advoka-self.vercel.app is a shared vercel.app domain —
+    // we can't add a CNAME for it, so Clerk's Frontend API is reverse-proxied
+    // through /__clerk instead. See Clerk Dashboard → Configure → Domains.
+    frontendApiProxy: {
+      enabled: () => true,
+    },
   }
-});
+);
 
 export const config = {
   matcher: [
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     "/(api|trpc)(.*)",
+    // Required so proxy requests actually reach clerkMiddleware
+    "/__clerk/(.*)",
   ],
 };
