@@ -19,10 +19,15 @@ export function PageHeader({
       initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, ease: [0.2, 0.8, 0.2, 1] }}
-      className={cn("flex items-start justify-between gap-4", className)}
+      className={cn(
+        "flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center",
+        className
+      )}
     >
       <div>
-        <h1 className="text-[26px] font-bold tracking-tight text-text-primary">{title}</h1>
+        <h1 className="text-[22px] font-bold tracking-tight text-text-primary sm:text-[26px]">
+          {title}
+        </h1>
         {description && (
           <p className="mt-1 text-[13.5px] text-text-secondary">{description}</p>
         )}

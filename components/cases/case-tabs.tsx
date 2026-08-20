@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Clock } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { EmptyState } from "@/components/ui/empty-state";
 import { DocumentsPanel } from "@/components/documents/documents-panel";
 import { OverviewTab } from "@/components/cases/overview-tab";
+import { TimelineTab } from "@/components/cases/timeline-tab";
 import { GraphTab } from "@/components/cases/graph-tab";
 import { ChatTab } from "@/components/chat/chat-panel";
 import { DraftsTab } from "@/components/cases/drafts-tab";
@@ -35,13 +34,17 @@ export function CaseTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col gap-4">
-      <TabsList>
-        {TABS.map((tab) => (
-          <TabsTrigger key={tab.value} value={tab.value}>
-            {tab.label}
-          </TabsTrigger>
-        ))}
-      </TabsList>
+      {/* §26 Responsive pass — six tabs don't fit a phone-width TabsList; let
+          the bar scroll horizontally there instead of wrapping or clipping. */}
+      <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:overflow-visible sm:px-0">
+        <TabsList className="w-max">
+          {TABS.map((tab) => (
+            <TabsTrigger key={tab.value} value={tab.value}>
+              {tab.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </div>
 
       <TabsContent value="overview">
         <OverviewTab
@@ -57,10 +60,12 @@ export function CaseTabs({
       </TabsContent>
 
       <TabsContent value="timeline">
-        <EmptyState
-          icon={<Clock className="h-5 w-5 text-text-muted" />}
-          title="No timeline events yet"
-          description="Once your documents are analyzed, key dates and events will appear here in chronological order, each linked to its source."
+        <TimelineTab
+          caseId={caseId}
+          hasExtractedDocuments={hasExtractedDocuments}
+          initialAnalysis={initialAnalysis}
+          onNavigateToDocuments={() => setActiveTab("documents")}
+          onNavigateToOverview={() => setActiveTab("overview")}
         />
       </TabsContent>
 

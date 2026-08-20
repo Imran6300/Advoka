@@ -1,14 +1,24 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import { manrope } from "@/lib/fonts";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryProvider } from "@/components/providers/query-provider";
+import { MotionProvider } from "@/components/providers/motion-provider";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Advoka — AI Case Intelligence",
   description: "Upload the case. Understand it faster. Work smarter.",
+};
+
+// §25 Accessibility / responsive pass — a correct viewport is what makes the
+// responsive layout (sidebar collapse, single-column stacking) behave on
+// actual mobile browsers instead of just resized desktop windows.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: "#0b0d12",
 };
 
 export default function RootLayout({
@@ -50,10 +60,12 @@ export default function RootLayout({
       <html lang="en" className={manrope.variable}>
         <body className="min-h-screen bg-background font-sans antialiased">
           <QueryProvider>
-            <TooltipProvider delayDuration={150}>
-              {children}
-              <Toaster />
-            </TooltipProvider>
+            <MotionProvider>
+              <TooltipProvider delayDuration={150}>
+                {children}
+                <Toaster />
+              </TooltipProvider>
+            </MotionProvider>
           </QueryProvider>
         </body>
       </html>

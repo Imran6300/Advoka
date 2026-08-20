@@ -51,7 +51,7 @@ export default async function DashboardPage() {
       </section>
 
       {/* §29 Level 3 — productivity metrics row */}
-      <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {metrics.map((m) => (
           <Card key={m.label}>
             <CardContent className="flex flex-col gap-3 p-5">

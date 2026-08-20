@@ -12,11 +12,16 @@ const NAV_ITEMS = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-export function Sidebar() {
+/**
+ * The actual nav content, shared between the persistent desktop `Sidebar`
+ * and the mobile slide-in drawer (`mobile-app-shell.tsx`) — one definition,
+ * two shells, so nav items never drift out of sync between breakpoints.
+ */
+export function SidebarNav() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex h-screen w-60 shrink-0 flex-col border-r border-border bg-surface">
+    <div className="flex h-full flex-col">
       <div className="flex h-16 items-center gap-2 px-5">
         <div className="ai-gradient-bg flex h-7 w-7 items-center justify-center rounded-sm text-[13px] font-bold text-text-primary">
           A
@@ -26,7 +31,7 @@ export function Sidebar() {
         </span>
       </div>
 
-      <nav className="flex-1 space-y-0.5 px-3 py-2">
+      <nav aria-label="Primary" className="flex-1 space-y-0.5 px-3 py-2">
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href || pathname?.startsWith(item.href + "/");
           const Icon = item.icon;
@@ -34,6 +39,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={active ? "page" : undefined}
               className={cn(
                 "group flex items-center gap-2.5 rounded-sm px-2.5 py-2 text-[13.5px] font-medium transition-colors duration-hover ease-advoka",
                 active
@@ -56,6 +62,15 @@ export function Sidebar() {
       <div className="border-t border-border p-3">
         <UserMenu />
       </div>
+    </div>
+  );
+}
+
+/** Persistent desktop rail — hidden below `lg`, where the mobile drawer takes over. */
+export function Sidebar() {
+  return (
+    <aside className="hidden h-screen w-60 shrink-0 flex-col border-r border-border bg-surface lg:flex">
+      <SidebarNav />
     </aside>
   );
 }
