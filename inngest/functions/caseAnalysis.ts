@@ -237,6 +237,13 @@ export const caseAnalysis = inngest.createFunction(
 
       return { status: "ready" as const };
     } catch (err) {
+      if (err instanceof LLMGenerationError) {
+        // The user-facing message is deliberately generic — this is the
+        // actual per-provider reason (401/403/rate-limit/etc), logged so
+        // it's visible in Vercel's runtime logs instead of being discarded.
+        console.error("[caseAnalysis] LLM provider attempts:", JSON.stringify(err.attempts, null, 2));
+      }
+
       const message =
         err instanceof LLMGenerationError
           ? "Advoka couldn't reach an AI provider to analyze this case. Please try again shortly."
