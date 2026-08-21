@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { Clock, RefreshCw, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -33,6 +34,13 @@ export function TimelineTab({
   const { analysis, isLoading, isTriggering, triggerAnalysis } = useCaseAnalysis(
     caseId,
     initialAnalysis
+  );
+
+  // Stable identity (perf pass) — see overview-tab.tsx for why this must be
+  // a useCallback rather than an inline function recreated every render.
+  const handleViewSource = useCallback(
+    (_source: CitationRef) => onNavigateToDocuments(),
+    [onNavigateToDocuments]
   );
 
   const status = analysis?.status ?? "not_started";
@@ -95,7 +103,6 @@ export function TimelineTab({
     );
   }
 
-  const handleViewSource = (_source: CitationRef) => onNavigateToDocuments();
   const hasTimeline = analysis.timeline.length > 0;
   const hasDeadlines = analysis.deadlines.length > 0;
 

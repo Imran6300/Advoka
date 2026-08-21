@@ -1,0 +1,441 @@
+/*
+ * Marketing (Advoka landing page) styles.
+ *
+ * This file is additive only — it never redefines a CSS custom property
+ * that the rest of the app already relies on (see app/globals.css). Where
+ * the landing page's original design used a token value that differs from
+ * the app's existing global value (only `--text-muted`, and the border-
+ * radius scale), the override is scoped under `.marketing-scope` so it
+ * applies to the landing page only and leaves the dashboard untouched.
+ *
+ * Imported only by the marketing landing page tree, so none of this ships
+ * to authenticated/dashboard routes.
+ */
+
+/* ==========================================================
+   New design tokens the landing page needs that the app didn't
+   already define (safe additions — unique names, no collisions).
+   ========================================================== */
+:root {
+  --ease-premium: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quad: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --dur-fast: 180ms;
+  --dur-base: 380ms;
+  --dur-slow: 700ms;
+}
+
+/* Scoped token overrides — landing page only */
+.marketing-scope {
+  --text-muted: #a7adbb;
+  --radius-md: 10px;
+  --radius-lg: 12px;
+  --radius-2xl: 20px;
+}
+
+/* ==========================================================
+   Reveal system — one shared trigger (.reveal.is-visible),
+   several entrance vocabularies selected via data-variant.
+   ========================================================== */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal-up-sm {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes reveal-scale {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes reveal-left {
+  from {
+    opacity: 0;
+    transform: translateX(-28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes reveal-right {
+  from {
+    opacity: 0;
+    transform: translateX(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes reveal-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.reveal {
+  opacity: 0;
+}
+
+.reveal.is-visible {
+  animation: reveal-up var(--dur-slow) var(--ease-premium) forwards;
+}
+
+.reveal[data-variant='up-sm'].is-visible {
+  animation-name: reveal-up-sm;
+  animation-duration: var(--dur-base);
+}
+
+.reveal[data-variant='scale'].is-visible {
+  animation-name: reveal-scale;
+  animation-duration: var(--dur-slow);
+}
+
+.reveal[data-variant='left'].is-visible {
+  animation-name: reveal-left;
+  animation-duration: var(--dur-slow);
+}
+
+.reveal[data-variant='right'].is-visible {
+  animation-name: reveal-right;
+  animation-duration: var(--dur-slow);
+}
+
+.reveal[data-variant='fade'].is-visible {
+  animation-name: reveal-fade;
+  animation-duration: var(--dur-slow);
+}
+
+/* Product-tour tab switching — a quick, contained scale+fade cross-transition */
+.reveal.is-visible.tab-switch {
+  animation-name: reveal-scale;
+  animation-duration: var(--dur-base);
+}
+
+/* ==========================================================
+   Interaction utilities
+   ========================================================== */
+
+/* Consistent, restrained lift for interactive cards */
+.card-interactive {
+  transition:
+    transform var(--dur-base) var(--ease-soft),
+    border-color var(--dur-base) var(--ease-soft),
+    background-color var(--dur-base) var(--ease-soft),
+    box-shadow var(--dur-base) var(--ease-soft);
+}
+.card-interactive:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 24px 48px -32px rgba(0, 0, 0, 0.55);
+}
+
+/* Button shine sweep — a single soft diagonal highlight on hover */
+.btn-shine {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.btn-shine::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(
+    115deg,
+    transparent 30%,
+    color-mix(in oklab, white 22%, transparent) 45%,
+    transparent 60%
+  );
+  transform: translateX(-120%);
+  opacity: 0;
+  transition:
+    transform 0.85s var(--ease-soft),
+    opacity 0.2s ease;
+}
+.btn-shine:hover::after {
+  transform: translateX(120%);
+  opacity: 1;
+}
+
+/* Slow ambient gradient drift for hero / CTA backgrounds */
+@keyframes ambient-drift {
+  0%,
+  100% {
+    transform: translate(-50%, 0) scale(1);
+  }
+  50% {
+    transform: translate(-50%, 12px) scale(1.04);
+  }
+}
+.ambient-drift {
+  animation: ambient-drift 14s var(--ease-soft) infinite;
+}
+
+/* Very subtle breathing glow, used sparingly (final CTA) */
+@keyframes glow-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+.glow-breathe {
+  animation: glow-breathe 5s ease-in-out infinite;
+}
+
+/* Soft one-shot intelligence pulse for AI-tagged surfaces on entry */
+@keyframes ai-pulse {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent-ai) 35%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 8px color-mix(in oklab, var(--accent-ai) 0%, transparent);
+  }
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--accent-ai) 0%, transparent);
+  }
+}
+.ai-pulse-once {
+  animation: ai-pulse 1.6s var(--ease-soft) 1;
+}
+
+/* SVG path draw-in, used for the evidence graph connections */
+@keyframes draw-line {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.draw-line {
+  stroke-dasharray: var(--len, 200);
+  stroke-dashoffset: var(--len, 200);
+}
+.reveal.is-visible .draw-line {
+  animation: draw-line var(--dur-slow) var(--ease-soft) forwards;
+  animation-delay: var(--delay, 0ms);
+}
+
+/* Graph nodes fade + settle in, staggered via inline --delay */
+@keyframes node-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+.graph-node {
+  opacity: 0;
+}
+.reveal.is-visible .graph-node {
+  animation: node-in var(--dur-base) var(--ease-soft) forwards;
+  animation-delay: var(--delay, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal,
+  .reveal.is-visible {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+  }
+  .ambient-drift,
+  .glow-breathe,
+  .ai-pulse-once {
+    animation: none !important;
+  }
+  .card-interactive:hover {
+    transform: none;
+  }
+  .btn-shine::after {
+    display: none;
+  }
+  .draw-line,
+  .reveal.is-visible .draw-line {
+    animation: none !important;
+    stroke-dashoffset: 0;
+  }
+  .graph-node,
+  .reveal.is-visible .graph-node {
+    animation: none !important;
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  [data-tilt] {
+    transform: none !important;
+  }
+}
+
+/* ==========================================================
+   Hero background system — thin orbit lines, drifting shapes,
+   rotating glow border. All GPU-friendly (transform/opacity only).
+   ========================================================== */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes spin-slow-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+.orbit-cw {
+  animation: spin-slow 90s linear infinite;
+  transform-origin: 50% 50%;
+}
+.orbit-ccw {
+  animation: spin-slow-reverse 130s linear infinite;
+  transform-origin: 50% 50%;
+}
+.orbit-ccw-fast {
+  animation: spin-slow-reverse 55s linear infinite;
+  transform-origin: 50% 50%;
+}
+
+@keyframes hero-float-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--rot, 0deg));
+  }
+  50% {
+    transform: translate3d(0, -14px, 0) rotate(var(--rot, 0deg));
+  }
+}
+@keyframes hero-float-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(var(--rot, 0deg));
+  }
+  50% {
+    transform: translate3d(0, 12px, 0) rotate(var(--rot, 0deg));
+  }
+}
+.hero-float-a {
+  animation: hero-float-a 9s var(--ease-soft) infinite;
+}
+.hero-float-b {
+  animation: hero-float-b 11s var(--ease-soft) infinite;
+}
+
+@keyframes dot-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.6);
+  }
+}
+.dot-pulse {
+  animation: dot-pulse 3.2s var(--ease-soft) infinite;
+}
+
+@keyframes border-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.glow-border {
+  position: relative;
+  isolation: isolate;
+}
+.glow-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  z-index: -1;
+}
+.glow-border-spin {
+  position: absolute;
+  inset: -60%;
+  animation: border-spin 16s linear infinite;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    color-mix(in oklab, var(--primary) 85%, transparent) 55deg,
+    transparent 120deg,
+    transparent 200deg,
+    color-mix(in oklab, var(--accent-ai) 80%, transparent) 260deg,
+    transparent 320deg,
+    transparent 360deg
+  );
+}
+
+@keyframes hero-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.hero-bg-in {
+  animation: hero-fade-in 1.6s var(--ease-soft) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .orbit-cw,
+  .orbit-ccw,
+  .orbit-ccw-fast,
+  .hero-float-a,
+  .hero-float-b,
+  .dot-pulse,
+  .glow-border-spin,
+  .hero-bg-in {
+    animation: none !important;
+  }
+}
+
+/* Subtle grid texture */
+.bg-grid {
+  background-image: linear-gradient(to right, color-mix(in oklab, var(--border) 55%, transparent) 1px, transparent 1px),
+    linear-gradient(to bottom, color-mix(in oklab, var(--border) 55%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+.bg-dots {
+  background-image: radial-gradient(color-mix(in oklab, var(--border) 90%, transparent) 1px, transparent 1px);
+  background-size: 22px 22px;
+}

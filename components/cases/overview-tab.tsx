@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { Sparkles, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
@@ -41,12 +42,19 @@ export function OverviewTab({
     initialAnalysis
   );
 
-  const handleViewSource = (_source: CitationRef) => {
-    // No in-app page-level PDF viewer yet (out of scope for Day 4) — the
-    // most useful thing to do today is take the lawyer straight to the
-    // Documents tab where the source file lives.
-    onNavigateToDocuments();
-  };
+  // Stable identity (perf pass) — passed down into every FactCard,
+  // ContradictionCard, and MissingInfoCard in the lists below, all of which
+  // are memoized; a new function reference here on every poll tick would
+  // defeat that memoization for the entire list on every render.
+  const handleViewSource = useCallback(
+    (_source: CitationRef) => {
+      // No in-app page-level PDF viewer yet (out of scope for Day 4) — the
+      // most useful thing to do today is take the lawyer straight to the
+      // Documents tab where the source file lives.
+      onNavigateToDocuments();
+    },
+    [onNavigateToDocuments]
+  );
 
   const status = analysis?.status ?? "not_started";
 

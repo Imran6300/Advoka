@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
@@ -29,7 +30,7 @@ function formatRelativeDate(date: string | Date) {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
 }
 
-export function CaseRow({ caseData }: { caseData: CaseRowData }) {
+export const CaseRow = memo(function CaseRow({ caseData }: { caseData: CaseRowData }) {
   return (
     <Link href={`/cases/${caseData._id}`} className="block">
       <motion.div whileHover={{ y: -2 }} transition={{ duration: 0.18, ease: [0.2, 0.8, 0.2, 1] }}>
@@ -51,4 +52,4 @@ export function CaseRow({ caseData }: { caseData: CaseRowData }) {
       </motion.div>
     </Link>
   );
-}
+});

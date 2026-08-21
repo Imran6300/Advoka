@@ -28,6 +28,10 @@ const config: Config = {
           foreground: "var(--text-primary)",
         },
         "ai-accent": "var(--ai-accent)",
+        // Marketing (landing page) tokens — same palette, names the
+        // landing page's components use.
+        elevated: "var(--elevated)",
+        "accent-ai": "var(--accent-ai)",
 
         "text-primary": "var(--text-primary)",
         "text-secondary": "var(--text-secondary)",
@@ -66,11 +70,15 @@ const config: Config = {
         },
       },
       // §16 Component design — restrained corner radii (8 / 12 / 16px)
+      // Values reference CSS custom properties (defined in globals.css)
+      // instead of literals so the marketing landing page can scope its
+      // own overrides to a subtree without changing these defaults.
       borderRadius: {
-        sm: "8px",
-        md: "12px",
-        lg: "16px",
-        xl: "16px",
+        sm: "var(--radius-sm)",
+        md: "var(--radius-md)",
+        lg: "var(--radius-lg)",
+        xl: "var(--radius-xl)",
+        "2xl": "var(--radius-2xl)",
       },
       // §19 Animation system — timing table
       transitionDuration: {

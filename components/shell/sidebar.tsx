@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "framer-motion";
@@ -29,9 +30,14 @@ export function SidebarNav() {
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-[68px] items-center gap-2.5 px-5">
-        <div className="ai-gradient-bg-animated animate-gradient-x flex h-8 w-8 items-center justify-center rounded-md text-[14px] font-bold text-text-primary shadow-sm">
-          A
-        </div>
+        <Image
+          src="/logo.png"
+          alt=""
+          width={32}
+          height={32}
+          priority
+          className="h-8 w-8 shrink-0 rounded-md shadow-sm"
+        />
         <span className="text-[16px] font-bold tracking-tight text-text-primary">
           Advoka
         </span>

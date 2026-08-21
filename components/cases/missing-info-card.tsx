@@ -1,9 +1,11 @@
+import { memo } from "react";
 import { AlertCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Citation } from "@/components/cases/citation";
 import type { CitationRef, MissingInfoResponse } from "@/lib/cases/analysis-types";
 
-export function MissingInfoCard({
+/** Memoized (perf pass) — see fact-card.tsx for the structural-sharing rationale. */
+export const MissingInfoCard = memo(function MissingInfoCard({
   item,
   onViewSource,
 }: {
@@ -37,4 +39,4 @@ export function MissingInfoCard({
       </div>
     </div>
   );
-}
+});

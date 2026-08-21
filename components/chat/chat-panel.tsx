@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Sparkles, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,7 +36,11 @@ export function ChatTab({
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, isSending]);
 
-  const handleViewSource = (_source: CitationRef) => onNavigateToDocuments();
+  // Stable identity (perf pass) — passed into every memoized ChatMessageBubble.
+  const handleViewSource = useCallback(
+    (_source: CitationRef) => onNavigateToDocuments(),
+    [onNavigateToDocuments]
+  );
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();

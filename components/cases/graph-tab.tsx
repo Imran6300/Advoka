@@ -1,13 +1,36 @@
 "use client";
 
+import { useCallback } from "react";
+import dynamic from "next/dynamic";
 import { Network, Sparkles, RefreshCw } from "lucide-react";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AIWorkingBlock } from "@/components/ui/ai-loader";
-import { CaseGraphView } from "@/components/graph/CaseGraphView";
 import { useCaseGraph } from "@/lib/hooks/use-case-graph";
 import { MIN_GRAPH_NODES_TO_RENDER } from "@/lib/cases/graph-constants";
 import type { CitationRef } from "@/lib/cases/analysis-types";
+
+// Perf pass — reactflow + dagre are only ever needed on this one tab, but
+// were previously imported statically, shipping their JS to every case page
+// even when the Graph tab is never opened. Loading it on demand (client-only
+// — ReactFlow measures the DOM, so it can't render on the server anyway)
+// keeps it out of the initial case-page bundle entirely.
+const CaseGraphView = dynamic(
+  () => import("@/components/graph/CaseGraphView").then((mod) => mod.CaseGraphView),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex flex-col gap-3">
+        <div className="flex gap-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-7 w-24 rounded-sm" />
+          ))}
+        </div>
+        <Skeleton className="h-[560px] w-full rounded-lg" />
+      </div>
+    ),
+  }
+);
 
 /**
  * §8 Case Relationship Graph — build plan Day 5. Every branch here mirrors
@@ -37,9 +60,12 @@ export function GraphTab({
 }) {
   const { graph, isLoading } = useCaseGraph(caseId, initialAnalysisStatus);
 
-  const handleViewSource = (_source: CitationRef) => {
-    onNavigateToDocuments();
-  };
+  const handleViewSource = useCallback(
+    (_source: CitationRef) => {
+      onNavigateToDocuments();
+    },
+    [onNavigateToDocuments]
+  );
 
   if (isLoading && !graph) {
     return (

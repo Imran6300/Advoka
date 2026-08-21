@@ -1,9 +1,11 @@
+import { memo } from "react";
 import { AlertTriangle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Citation } from "@/components/cases/citation";
 import type { CitationRef, ContradictionResponse } from "@/lib/cases/analysis-types";
 
-export function ContradictionCard({
+/** Memoized (perf pass) — see fact-card.tsx for the structural-sharing rationale. */
+export const ContradictionCard = memo(function ContradictionCard({
   contradiction,
   onViewSource,
 }: {
@@ -44,4 +46,4 @@ export function ContradictionCard({
       </div>
     </div>
   );
-}
+});

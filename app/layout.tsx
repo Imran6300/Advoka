@@ -10,6 +10,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Advoka — AI Case Intelligence",
   description: "Upload the case. Understand it faster. Work smarter.",
+  icons: {
+    icon: "/logo.png",
+    shortcut: "/logo.png",
+    apple: "/logo.png",
+  },
 };
 
 // §25 Accessibility / responsive pass — a correct viewport is what makes the

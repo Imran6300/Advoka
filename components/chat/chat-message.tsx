@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Sparkles, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Citation } from "@/components/cases/citation";
@@ -55,7 +56,14 @@ function AnswerBody({ content }: { content: string }) {
   );
 }
 
-export function ChatMessageBubble({
+/**
+ * Memoized (perf pass) — every new message appends to the array in
+ * use-case-chat.ts without touching earlier message objects, so once
+ * `onViewSource` is a stable callback (see chat-panel.tsx), this skips
+ * re-rendering the entire scrollback on every new message or "thinking"
+ * state change instead of just the newest bubble.
+ */
+export const ChatMessageBubble = memo(function ChatMessageBubble({
   message,
   onViewSource,
 }: {
@@ -100,4 +108,4 @@ export function ChatMessageBubble({
       </div>
     </div>
   );
-}
+});

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { FileText, RotateCw } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -55,7 +56,14 @@ function statusBadgeVariant(status: ReturnType<typeof toDisplayStatus>) {
   }
 }
 
-export function DocumentRow({
+/**
+ * Memoized (perf pass) — the Documents tab polls `useCaseStatus` every 4s
+ * while anything is still extracting. React Query's structural sharing
+ * keeps unchanged document objects referentially stable across polls, so
+ * this skips re-rendering rows whose status hasn't actually changed instead
+ * of re-rendering the entire list on every tick.
+ */
+export const DocumentRow = memo(function DocumentRow({
   document,
   onRetry,
   retrying,
@@ -117,4 +125,4 @@ export function DocumentRow({
       </CardContent>
     </Card>
   );
-}
+});

@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 
 export function AuthShell({ children }: { children: React.ReactNode }) {
@@ -13,9 +14,14 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
           className="flex flex-col items-center gap-2 text-center"
         >
           <div className="flex items-center gap-2">
-            <div className="ai-gradient-bg flex h-8 w-8 items-center justify-center rounded-sm text-sm font-bold text-text-primary">
-              A
-            </div>
+            <Image
+              src="/logo.png"
+              alt=""
+              width={32}
+              height={32}
+              priority
+              className="h-8 w-8 shrink-0 rounded-sm"
+            />
             <span className="text-xl font-bold tracking-tight text-text-primary">
               Advoka
             </span>

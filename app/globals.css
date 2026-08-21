@@ -26,6 +26,14 @@
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
+  --radius-xl: 16px;
+  --radius-2xl: 16px;
+
+  /* Marketing (landing page) design tokens — additive only, matching the
+     hex values already used elsewhere under different names above, plus
+     one genuinely new token (--accent-ai) the landing page introduces. */
+  --elevated: #171b24;
+  --accent-ai: #8b7cf6;
 }
 
 * {

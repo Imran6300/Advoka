@@ -43,7 +43,13 @@ const TabsContent = React.forwardRef<
   <TabsPrimitive.Content
     ref={ref}
     className={cn(
-      "mt-4 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary animate-in fade-in duration-page",
+      // `data-[state=inactive]:hidden` matters once a panel is kept mounted
+      // via `forceMount` (case-tabs.tsx's keep-alive tabs) — Radix only
+      // toggles its native `hidden` attribute when a panel unmounts, so a
+      // force-mounted-but-inactive panel needs this to actually disappear
+      // instead of rendering on top of the active one. It's a no-op for any
+      // ordinary (non-forceMount) tab, which Radix still unmounts entirely.
+      "mt-4 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary animate-in fade-in duration-page data-[state=inactive]:hidden",
       className
     )}
     {...props}

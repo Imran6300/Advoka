@@ -1,9 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import type { CaseGraphResponse } from "@/lib/cases/graph-types";
-
-const POLL_INTERVAL_MS = 3000;
 
 interface UseCaseGraphResult {
   graph: CaseGraphResponse | null;
@@ -11,61 +9,34 @@ interface UseCaseGraphResult {
 }
 
 /**
- * Mirrors lib/hooks/use-case-analysis.ts's plain fetch + setInterval
- * pattern (no WebSockets, per the build plan's status-polling convention).
+ * Backed by React Query (perf pass — was a hand-rolled fetch + setInterval,
+ * see use-case-analysis.ts for the full rationale). Keying on
+ * `["case-graph", caseId]` means the Graph tab's data survives a tab
+ * switch instead of refetching — and re-running dagre's layout — every
+ * time the lawyer comes back to it, now that case-tabs.tsx keeps visited
+ * tabs mounted instead of unmounting them.
  *
- * Two things can be "in flight" for the Graph tab: the analysis itself
+ * Two things can be "in flight" for this tab: the analysis itself
  * (analysisStatus === "processing"), and — once analysis is "ready" — the
  * graph-build step running as its own trailing Inngest function, which is
  * why `caseStatus` (Case.status, flips to "ready" only once graph-build
  * finishes) is checked separately from `analysisStatus`.
  */
 export function useCaseGraph(caseId: string, analysisStatus: string): UseCaseGraphResult {
-  const [graph, setGraph] = useState<CaseGraphResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const fetchGraph = useCallback(async () => {
-    try {
+  const query = useQuery({
+    queryKey: ["case-graph", caseId],
+    queryFn: async (): Promise<CaseGraphResponse> => {
       const res = await fetch(`/api/cases/${caseId}/graph`, { cache: "no-store" });
-      if (!res.ok) return undefined;
-      const data: CaseGraphResponse = await res.json();
-      setGraph(data);
-      return data;
-    } catch {
-      return undefined;
-    }
-  }, [caseId]);
+      if (!res.ok) throw new Error("Failed to fetch graph");
+      return res.json();
+    },
+    refetchInterval: (q) => {
+      const data = q.state.data as CaseGraphResponse | undefined;
+      const stillWaiting =
+        analysisStatus === "processing" || (!!data && data.analysisStatus === "ready" && data.caseStatus !== "ready");
+      return stillWaiting ? 3000 : false;
+    },
+  });
 
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setIsLoading(true);
-      await fetchGraph();
-      if (!cancelled) setIsLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-    // Re-fetch once the Overview tab's own polling reports analysis moving
-    // out of "processing" — this tab may be mounted before that happens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseId]);
-
-  useEffect(() => {
-    const stillWaiting =
-      analysisStatus === "processing" || (graph && graph.analysisStatus === "ready" && graph.caseStatus !== "ready");
-
-    if (!stillWaiting) {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      return;
-    }
-
-    intervalRef.current = setInterval(fetchGraph, POLL_INTERVAL_MS);
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [analysisStatus, graph, fetchGraph]);
-
-  return { graph, isLoading };
+  return { graph: query.data ?? null, isLoading: query.isLoading };
 }

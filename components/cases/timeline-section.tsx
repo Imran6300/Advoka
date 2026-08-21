@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Citation } from "@/components/cases/citation";
 import type { CitationRef, TimelineEventResponse } from "@/lib/cases/analysis-types";
 
@@ -6,7 +7,8 @@ function formatEventDate(date: string | null): string {
   return new Date(date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
-export function TimelineSection({
+/** Memoized (perf pass) — see fact-card.tsx for the structural-sharing rationale. */
+export const TimelineSection = memo(function TimelineSection({
   events,
   onViewSource,
 }: {
@@ -32,4 +34,4 @@ export function TimelineSection({
       ))}
     </ol>
   );
-}
+});

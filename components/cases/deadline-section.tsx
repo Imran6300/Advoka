@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Citation } from "@/components/cases/citation";
@@ -11,7 +12,8 @@ const STATUS_BADGE_VARIANT: Record<DeadlineStatus, "error" | "warning" | "succes
   upcoming: "success",
 };
 
-export function DeadlineSection({
+/** Memoized (perf pass) — see fact-card.tsx for the structural-sharing rationale. */
+export const DeadlineSection = memo(function DeadlineSection({
   deadlines,
   onViewSource,
 }: {
@@ -52,4 +54,4 @@ export function DeadlineSection({
       })}
     </div>
   );
-}
+});

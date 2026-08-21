@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { FileCheck, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Citation } from "@/components/cases/citation";
@@ -7,8 +8,14 @@ import type { CitationRef, FactItemResponse } from "@/lib/cases/analysis-types";
  * §7 Overview "compact fact cards, source line under each" — reused for Key
  * Facts, Evidence, and (People, rendered inline within Key Facts) since
  * they share the same underlying CaseFact shape.
+ *
+ * Memoized (perf pass) — `analysis.facts`/`evidence`/`people` come from a
+ * React Query resource with structural sharing, so unchanged items keep a
+ * stable reference across polls; combined with the stable `onViewSource`
+ * callback from overview-tab.tsx, this skips re-rendering cards whose data
+ * hasn't actually changed.
  */
-export function FactCard({
+export const FactCard = memo(function FactCard({
   fact,
   onViewSource,
 }: {
@@ -37,7 +44,7 @@ export function FactCard({
       <Citation source={fact.source} onViewSource={onViewSource} className="mt-2 pl-[22px]" />
     </div>
   );
-}
+});
 
 export function FactCardGrid({
   items,
