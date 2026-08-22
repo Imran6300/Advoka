@@ -15,7 +15,11 @@ import { connectDB } from "@/lib/db/connect";
  * stack trace, matching the rest of the pipeline's error-state discipline.
  */
 export const draftGeneration = inngest.createFunction(
-  { id: "draft-generation", name: "AI Draft Generator" },
+  {
+    id: "draft-generation",
+    name: "AI Draft Generator",
+    concurrency: { limit: 5 },
+  },
   { event: "draft.generate.requested" },
   async ({ event, step }) => {
     const { draftId, caseId, ownerId } = event.data;

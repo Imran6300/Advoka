@@ -42,7 +42,16 @@ import {
  * source is silently dropped, never shown (build plan non-negotiable).
  */
 export const caseAnalysis = inngest.createFunction(
-  { id: "case-analysis", name: "AI Case Analyzer" },
+  {
+    id: "case-analysis",
+    name: "AI Case Analyzer",
+    // Heaviest LLM consumer of the four functions — several generate()
+    // calls per run (facts/summary, contradictions, timeline/deadlines).
+    // Kept tighter than document-processing so concurrent "Analyze" clicks
+    // across cases don't multiply that out and burn through every free-tier
+    // provider's rate limit at once.
+    concurrency: { limit: 3 },
+  },
   { event: "case.analyze.requested" },
   async ({ event, step }) => {
     const { caseId, ownerId } = event.data;

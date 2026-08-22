@@ -15,6 +15,13 @@ import { handleApiError, caseNotFoundResponse } from "@/lib/api/errors";
 
 const MAX_QUESTION_LENGTH = 2000;
 
+// This route calls generate() synchronously (see comment on POST below),
+// unlike analyze/drafts which just enqueue an Inngest job and return.
+// Default Vercel duration (10s on Hobby) is shorter than a full provider
+// fallback chain walk (embed + retrieval + LLM call, possibly across
+// several models if the first ones fail) can take.
+export const maxDuration = 60;
+
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const owner = await getOwner();

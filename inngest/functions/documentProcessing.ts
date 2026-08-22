@@ -27,7 +27,15 @@ interface ExtractionOutcome {
 }
 
 export const documentProcessing = inngest.createFunction(
-  { id: "document-processing", name: "Document Processing" },
+  {
+    id: "document-processing",
+    name: "Document Processing",
+    // Without this, uploading 10 documents at once fires 10 parallel runs,
+    // each hitting the same free-tier embedding/extraction path
+    // simultaneously — rate-limits every one of them at once instead of
+    // queueing cleanly.
+    concurrency: { limit: 5 },
+  },
   { event: "document.uploaded" },
   async ({ event, step }) => {
     const { documentId, caseId, ownerId } = event.data;

@@ -38,7 +38,11 @@ import {
  * "Processing" forever.
  */
 export const graphBuild = inngest.createFunction(
-  { id: "case-graph-build", name: "Case Graph Builder" },
+  {
+    id: "case-graph-build",
+    name: "Case Graph Builder",
+    concurrency: { limit: 3 },
+  },
   { event: "case.graph.build" },
   async ({ event, step }) => {
     const { caseId, ownerId } = event.data;

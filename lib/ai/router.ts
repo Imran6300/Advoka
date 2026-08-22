@@ -154,6 +154,9 @@ async function callProvider(
   temperature: number,
   maxTokens: number
 ): Promise<string> {
+  // A provider that hangs instead of erroring would otherwise burn the
+  // entire function's time budget on one dead model — this makes it fail
+  // fast into the next model/provider in the chain instead.
   const res = await fetch(provider.baseUrl, {
     method: "POST",
     headers: {
@@ -171,6 +174,7 @@ async function callProvider(
       max_tokens: maxTokens,
       response_format: { type: "json_object" },
     }),
+    signal: AbortSignal.timeout(15_000),
   });
 
   if (!res.ok) {
