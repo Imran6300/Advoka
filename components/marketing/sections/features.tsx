@@ -5,7 +5,7 @@ import { TimelinePanel, GraphViz, ChatPanel, DraftsPanel } from '@/components/ma
 
 export function Features() {
   return (
-    <section id="features" className="mx-auto max-w-6xl px-5 py-24 sm:px-8 sm:py-28">
+    <section id="features" className="relative mx-auto max-w-6xl overflow-x-hidden px-5 py-24 sm:px-8 sm:py-28">
       <SectionHeading
         eyebrow="Features"
         title="Everything you need to investigate a case."
