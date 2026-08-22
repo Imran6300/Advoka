@@ -1,4 +1,8 @@
 import mongoose from "mongoose";
+// Side-effect import — registers every Mongoose model up front so any
+// route's .populate() call works regardless of which models that specific
+// route file imports directly. See lib/db/models/index.ts for why.
+import "@/lib/db/models";
 
 const MONGODB_URI = process.env.MONGODB_URI;
 
