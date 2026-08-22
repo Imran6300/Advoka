@@ -7,11 +7,11 @@ import { CtaButton } from '@/components/marketing/cta-button'
 import { cn } from '@/lib/utils'
 
 const LINKS = [
-  { label: 'Product', href: '#product' },
-  { label: 'Features', href: '#features' },
-  { label: 'How it works', href: '#how-it-works' },
-  { label: 'Security', href: '#security' },
-  { label: 'FAQ', href: '#faq' },
+  { label: 'Product', href: '/#product' },
+  { label: 'Features', href: '/#features' },
+  { label: 'How it works', href: '/#how-it-works' },
+  { label: 'Security', href: '/#security' },
+  { label: 'FAQ', href: '/#faq' },
 ]
 
 export function Navbar() {
@@ -41,7 +41,7 @@ export function Navbar() {
       )}
     >
       <div className="mx-auto flex h-16 max-w-6xl items-center gap-6 px-5 sm:px-8">
-        <a href="#top" className="group shrink-0" aria-label="Advoka home">
+        <a href="/#top" className="group shrink-0" aria-label="Advoka home">
           <span className="inline-block transition-transform duration-300 ease-out group-hover:scale-[1.03]">
             <AdvokaLogo />
           </span>
