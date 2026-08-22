@@ -27,13 +27,27 @@ export async function embedText(text: string): Promise<number[]> {
   return Array.from(output.data as Float32Array);
 }
 
-/** Embeds many strings sequentially — kept simple and memory-predictable for an MVP. */
+/** Embeds many strings in batched passes instead of one call per string.
+ *  Batch size is capped so a large document (100s of chunks) doesn't spike
+ *  memory in one huge inference call on a serverless function. */
 export async function embedTexts(texts: string[]): Promise<number[][]> {
+  if (texts.length === 0) return [];
   const extractor = await getPipeline();
+  const BATCH_SIZE = 32;
   const results: number[][] = [];
-  for (const text of texts) {
-    const output = await extractor(text, { pooling: "mean", normalize: true });
-    results.push(Array.from(output.data as Float32Array));
+
+  for (let start = 0; start < texts.length; start += BATCH_SIZE) {
+    const batch = texts.slice(start, start + BATCH_SIZE);
+    const output = await extractor(batch, { pooling: "mean", normalize: true });
+    // Batched output is a stacked tensor: [batch.length, 384]. Split it back
+    // into one plain array per input string.
+    const dims = output.dims as number[];
+    const dim = dims[dims.length - 1];
+    const flat = output.data as Float32Array;
+    for (let i = 0; i < batch.length; i++) {
+      results.push(Array.from(flat.subarray(i * dim, (i + 1) * dim)));
+    }
   }
+
   return results;
 }
