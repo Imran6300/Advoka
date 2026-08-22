@@ -28,16 +28,45 @@ export interface DocumentRowData {
   localUploadPercent?: number;
 }
 
-/** §8 — subtle animated progress indicator, never a generic spinner. */
-function ProcessingIndicator() {
+/**
+ * §8 — subtle animated progress indicator, never a generic spinner.
+ *
+ * Two distinct states, each with its own motion:
+ *  - `percent` known (real HTTP upload progress): an actual determinate
+ *    fill that eases to the real width, with a soft leading-edge glow.
+ *  - `percent` undefined (server-side extraction/processing, no real
+ *    progress signal): a single clean indeterminate sweep.
+ *
+ * Previously this mixed a CSS keyframe (animate-gradient-x, driving
+ * backgroundPosition) with a Framer Motion transform animation on the
+ * *same element*, plus a second overlapping sweep layer — three motions
+ * fighting on top of each other, which read as glitchy. This version
+ * drives exactly one motion per layer.
+ */
+function ProcessingIndicator({ percent }: { percent?: number }) {
+  if (typeof percent === "number") {
+    const clamped = Math.min(100, Math.max(0, percent));
+    return (
+      <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
+        <motion.div
+          className="ai-gradient-bg absolute inset-y-0 left-0 rounded-full"
+          initial={{ width: 0 }}
+          animate={{ width: `${clamped}%` }}
+          transition={{ duration: 0.35, ease: [0.2, 0.8, 0.2, 1] }}
+        >
+          <div className="absolute inset-y-0 right-0 w-4 -translate-y-0 bg-white/25 blur-[3px]" />
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative h-1.5 w-full overflow-hidden rounded-full bg-surface-elevated">
       <motion.div
-        className="ai-gradient-bg-animated absolute inset-y-0 w-1/3 animate-gradient-x rounded-full"
-        animate={{ x: ["-100%", "220%"] }}
-        transition={{ duration: 1.4, repeat: Infinity, ease: [0.2, 0.8, 0.2, 1] }}
+        className="ai-gradient-bg absolute inset-y-0 w-1/3 rounded-full"
+        animate={{ left: ["-33%", "100%"] }}
+        transition={{ duration: 1.3, repeat: Infinity, ease: [0.2, 0.8, 0.2, 1] }}
       />
-      <div className="absolute inset-0 animate-sweep bg-gradient-to-r from-transparent via-white/10 to-transparent" />
     </div>
   );
 }
@@ -117,7 +146,11 @@ export const DocumentRow = memo(function DocumentRow({
           )}
         </div>
 
-        {showProgressBar && <ProcessingIndicator />}
+        {showProgressBar && (
+          <ProcessingIndicator
+            percent={displayStatus === "uploading" ? document.localUploadPercent : undefined}
+          />
+        )}
 
         {displayStatus === "failed" && document.errorMessage && (
           <p className="text-[12.5px] text-error">{document.errorMessage}</p>
