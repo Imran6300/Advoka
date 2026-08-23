@@ -33,6 +33,27 @@ interface ProviderConfig {
 
 const PROVIDERS: ProviderConfig[] = [
   {
+    name: "openrouter",
+    envKey: "OPENROUTER_API_KEY",
+    baseUrl: "https://openrouter.ai/api/v1/chat/completions",
+    modelEnvKey: "OPENROUTER_MODEL",
+    extraHeaders: {
+      // Public leaderboard attribution only — harmless, point at your own domain.
+      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://advoka.in",
+      "X-Title": "Advoka",
+    },
+    // Only ":free" ids — guarantees every call costs $0. Do not add a
+    // non-":free" id here unless you're fine with it spending real credits.
+    models: [
+      "stealth/ox-alpha",
+      "nvidia/nemotron-3-ultra-550b-a55b:free",
+      "nvidia/nemotron-3-super-120b-a12b:free",
+      "openai/gpt-oss-20b:free",
+      "google/gemma-4-31b-it:free",
+      "nvidia/nemotron-3-nano-30b-a3b:free",
+    ],
+  },
+  {
     name: "groq",
     envKey: "GROQ_API_KEY",
     baseUrl: "https://api.groq.com/openai/v1/chat/completions",
@@ -55,26 +76,6 @@ const PROVIDERS: ProviderConfig[] = [
     // Cerebras' free-tier catalog is intentionally small — no further
     // fallback available within it beyond these three.
     models: ["gpt-oss-120b", "zai-glm-4.7", "gemma-4-31b"],
-  },
-  {
-    name: "openrouter",
-    envKey: "OPENROUTER_API_KEY",
-    baseUrl: "https://openrouter.ai/api/v1/chat/completions",
-    modelEnvKey: "OPENROUTER_MODEL",
-    extraHeaders: {
-      // Public leaderboard attribution only — harmless, point at your own domain.
-      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://advoka.in",
-      "X-Title": "Advoka",
-    },
-    // Only ":free" ids — guarantees every call costs $0. Do not add a
-    // non-":free" id here unless you're fine with it spending real credits.
-    models: [
-      "nvidia/nemotron-3-ultra-550b-a55b:free",
-      "nvidia/nemotron-3-super-120b-a12b:free",
-      "openai/gpt-oss-20b:free",
-      "google/gemma-4-31b-it:free",
-      "nvidia/nemotron-3-nano-30b-a3b:free",
-    ],
   },
   {
     name: "nvidia",
