@@ -16,8 +16,11 @@ function greeting() {
 }
 
 export default async function DashboardPage() {
-  const user = await currentUser();
-  const owner = await getOwner();
+  // §Perf pass — currentUser() (Clerk) and getOwner() (Mongo) don't depend
+  // on each other, so there's no reason to pay for both round trips in
+  // series before getDashboardStatsForOwner (which DOES depend on owner)
+  // can even start.
+  const [user, owner] = await Promise.all([currentUser(), getOwner()]);
   const stats = await getDashboardStatsForOwner(owner);
   const firstName = user?.firstName ?? "there";
 

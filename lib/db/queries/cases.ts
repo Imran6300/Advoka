@@ -51,12 +51,17 @@ export interface DashboardStats {
 
 export async function getDashboardStatsForOwner(owner: IUser): Promise<DashboardStats> {
   await connectDB();
-  const cases = await Case.find({ ownerId: owner._id }).sort({ updatedAt: -1 }).lean<ICase[]>();
 
-  const upcomingDeadlines = await Deadline.countDocuments({
-    ownerId: owner._id,
-    dueDate: { $gte: new Date() },
-  });
+  // §Perf pass — these two queries don't depend on each other, but were
+  // awaited sequentially, so the dashboard paid for both round trips
+  // back-to-back instead of in parallel.
+  const [cases, upcomingDeadlines] = await Promise.all([
+    Case.find({ ownerId: owner._id }).sort({ updatedAt: -1 }).lean<ICase[]>(),
+    Deadline.countDocuments({
+      ownerId: owner._id,
+      dueDate: { $gte: new Date() },
+    }),
+  ]);
 
   return {
     activeCases: cases.length,

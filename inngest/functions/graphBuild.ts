@@ -14,6 +14,7 @@ import {
   clearGraphEdgesForCase,
   insertGraphEdges,
   markCaseReady,
+  markCaseReadyDespiteGraphError,
   type NewGraphEdge,
 } from "@/lib/db/queries/graph";
 
@@ -47,98 +48,119 @@ export const graphBuild = inngest.createFunction(
   async ({ event, step }) => {
     const { caseId, ownerId } = event.data;
 
-    const caseRecord = await step.run("load-case", async () => {
-      await connectDB();
-      const record = await Case.findOne({ _id: caseId, ownerId }).lean<{
-        _id: Types.ObjectId;
-        title: string;
-      }>();
-      if (!record) throw new Error(`Case ${caseId} not found for owner ${ownerId}`);
-      return { title: record.title };
-    });
-
-    const entities = await step.run("load-entities", async () => {
-      return loadGraphEntities(caseId, ownerId);
-    });
-
-    await step.run("clear-previous-edges", async () => {
-      await clearGraphEdgesForCase(caseId);
-    });
-
-    const mechanicalEdges = await step.run("mechanical-edges", async () => {
-      const edges = buildMechanicalEdges(entities);
-      await insertGraphEdges(toNewGraphEdges(edges, caseId, ownerId));
-      return edges;
-    });
-
-    const totalEntities =
-      entities.people.length + entities.evidence.length + entities.contradictions.length + entities.missingInfo.length;
-
-    // Skip the LLM pass entirely below two entities — nothing to relate,
-    // and it avoids burning a provider call on a near-empty case.
-    if (totalEntities >= 2) {
-      await step.run("llm-relationships", async () => {
-        try {
-          const { refMap, entitiesBlock } = buildEntityRefs(entities);
-          if (refMap.size < 2) return;
-
-          const { systemPrompt, userPrompt } = buildGraphRelationshipsPrompt(entitiesBlock, caseRecord.title);
-          const result = await generate({
-            systemPrompt,
-            userPrompt,
-            schema: GraphRelationshipsSchema,
-            maxTokens: 2000,
-          });
-
-          const mechanicalKeys = new Set(mechanicalEdges.map((e) => edgeKey(e)));
-          const seen = new Set<string>();
-          const llmEdges: DraftEdge[] = [];
-
-          for (const rel of result.relationships) {
-            if (rel.sourceRef === rel.targetRef) continue;
-            const source = refMap.get(rel.sourceRef);
-            const target = refMap.get(rel.targetRef);
-            if (!source || !target) continue; // hallucinated ref — drop rather than guess
-
-            const key = edgeKey({
-              sourceType: source.type,
-              sourceId: source.id,
-              targetType: target.type,
-              targetId: target.id,
-            });
-            if (mechanicalKeys.has(key) || seen.has(key)) continue;
-            seen.add(key);
-
-            llmEdges.push({
-              sourceType: source.type,
-              sourceId: source.id,
-              targetType: target.type,
-              targetId: target.id,
-              relationshipLabel: rel.relationshipLabel,
-              // Intentionally left unsourced — this relationship came from
-              // the model's read of the case, not a shared page reference,
-              // so the graph UI renders it as visibly lower-confidence
-              // (dashed edge, "possibly related") rather than claiming a
-              // traceable source it doesn't have (architecture §14).
-            });
-          }
-
-          await insertGraphEdges(toNewGraphEdges(llmEdges, caseId, ownerId));
-        } catch (err) {
-          // A failed/unparseable LLM relationship pass shouldn't cost the
-          // lawyer the mechanical edges already saved above — log and move
-          // on, same "mark as review needed rather than crash" discipline
-          // as the rest of the AI pipeline (architecture §7).
-          console.error("case.graph.build: LLM relationship pass failed", err);
-        }
+    // §Bugfix — everything below used to run with no top-level failure
+    // handler. If ANY step here threw (a transient Mongo blip while
+    // loading entities, a malformed record reaching buildMechanicalEdges,
+    // etc.), Inngest would retry a handful of times and then give up —
+    // and because `Case.status` only flips to "ready" in this function's
+    // `finalize` step, a case whose analysis had already completed
+    // successfully would be left showing "Processing" forever, with no
+    // error surfaced anywhere and no way to retry. The inner try/catch
+    // around the LLM relationship pass already protected against *that*
+    // one failure mode; this outer one protects against every other step
+    // in the function, matching caseAnalysis.ts's top-level try/catch.
+    try {
+      const caseRecord = await step.run("load-case", async () => {
+        await connectDB();
+        const record = await Case.findOne({ _id: caseId, ownerId }).lean<{
+          _id: Types.ObjectId;
+          title: string;
+        }>();
+        if (!record) throw new Error(`Case ${caseId} not found for owner ${ownerId}`);
+        return { title: record.title };
       });
+
+      const entities = await step.run("load-entities", async () => {
+        return loadGraphEntities(caseId, ownerId);
+      });
+
+      await step.run("clear-previous-edges", async () => {
+        await clearGraphEdgesForCase(caseId);
+      });
+
+      const mechanicalEdges = await step.run("mechanical-edges", async () => {
+        const edges = buildMechanicalEdges(entities);
+        await insertGraphEdges(toNewGraphEdges(edges, caseId, ownerId));
+        return edges;
+      });
+
+      const totalEntities =
+        entities.people.length + entities.evidence.length + entities.contradictions.length + entities.missingInfo.length;
+
+      // Skip the LLM pass entirely below two entities — nothing to relate,
+      // and it avoids burning a provider call on a near-empty case.
+      if (totalEntities >= 2) {
+        await step.run("llm-relationships", async () => {
+          try {
+            const { refMap, entitiesBlock } = buildEntityRefs(entities);
+            if (refMap.size < 2) return;
+
+            const { systemPrompt, userPrompt } = buildGraphRelationshipsPrompt(entitiesBlock, caseRecord.title);
+            const result = await generate({
+              systemPrompt,
+              userPrompt,
+              schema: GraphRelationshipsSchema,
+              maxTokens: 2000,
+            });
+
+            const mechanicalKeys = new Set(mechanicalEdges.map((e) => edgeKey(e)));
+            const seen = new Set<string>();
+            const llmEdges: DraftEdge[] = [];
+
+            for (const rel of result.relationships) {
+              if (rel.sourceRef === rel.targetRef) continue;
+              const source = refMap.get(rel.sourceRef);
+              const target = refMap.get(rel.targetRef);
+              if (!source || !target) continue; // hallucinated ref — drop rather than guess
+
+              const key = edgeKey({
+                sourceType: source.type,
+                sourceId: source.id,
+                targetType: target.type,
+                targetId: target.id,
+              });
+              if (mechanicalKeys.has(key) || seen.has(key)) continue;
+              seen.add(key);
+
+              llmEdges.push({
+                sourceType: source.type,
+                sourceId: source.id,
+                targetType: target.type,
+                targetId: target.id,
+                relationshipLabel: rel.relationshipLabel,
+                // Intentionally left unsourced — this relationship came from
+                // the model's read of the case, not a shared page reference,
+                // so the graph UI renders it as visibly lower-confidence
+                // (dashed edge, "possibly related") rather than claiming a
+                // traceable source it doesn't have (architecture §14).
+              });
+            }
+
+            await insertGraphEdges(toNewGraphEdges(llmEdges, caseId, ownerId));
+          } catch (err) {
+            // A failed/unparseable LLM relationship pass shouldn't cost the
+            // lawyer the mechanical edges already saved above — log and move
+            // on, same "mark as review needed rather than crash" discipline
+            // as the rest of the AI pipeline (architecture §7).
+            console.error("case.graph.build: LLM relationship pass failed", err);
+          }
+        });
+      }
+
+      await step.run("finalize", async () => {
+        await markCaseReady(caseId);
+      });
+
+      return { status: "ready" as const };
+    } catch (err) {
+      // Last-resort net: whatever broke, the case's analysis already
+      // succeeded (that's a precondition for this event even firing), so
+      // the lawyer should still get a usable "Ready" case — just with an
+      // empty/partial graph tab — instead of a permanently stuck one.
+      console.error("case.graph.build: pipeline failed, unblocking case anyway", err);
+      await markCaseReadyDespiteGraphError(caseId);
+      return { status: "ready_without_graph" as const };
     }
-
-    await step.run("finalize", async () => {
-      await markCaseReady(caseId);
-    });
-
-    return { status: "ready" as const };
   }
 );
 

@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
-import { CaseHeader } from "@/components/cases/case-header";
-import { CaseTabs } from "@/components/cases/case-tabs";
+import { CaseDetailShell } from "@/components/cases/case-detail-shell";
 import { getOwner } from "@/lib/auth/getOwner";
 import { getCaseForOwner } from "@/lib/db/queries/cases";
 import { listDocumentsForCase } from "@/lib/db/queries/documents";
@@ -36,18 +35,17 @@ export default async function CaseDetailPage({ params }: { params: { id: string 
   };
 
   return (
-    <div className="flex flex-col gap-6">
-      <CaseHeader
-        caseData={{
-          title: caseDoc.title,
-          caseType: caseDoc.caseType,
-          clientName: caseDoc.clientName,
-          opposingParty: caseDoc.opposingParty,
-          importantDate: caseDoc.importantDate,
-          status: caseDoc.status,
-        }}
-      />
-      <CaseTabs caseId={params.id} initialStatus={initialStatus} initialAnalysis={initialAnalysis} />
-    </div>
+    <CaseDetailShell
+      caseId={params.id}
+      headerData={{
+        title: caseDoc.title,
+        caseType: caseDoc.caseType,
+        clientName: caseDoc.clientName,
+        opposingParty: caseDoc.opposingParty,
+        importantDate: caseDoc.importantDate,
+      }}
+      initialStatus={initialStatus}
+      initialAnalysis={initialAnalysis}
+    />
   );
 }

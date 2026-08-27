@@ -47,6 +47,23 @@ export async function markCaseReady(caseId: Types.ObjectId | string) {
 }
 
 /**
+ * Fallback for when the graph build pipeline itself throws (not just the
+ * inner LLM relationship pass, which already has its own try/catch) — e.g.
+ * a transient Mongo error while loading entities. The case's analysis
+ * (facts/contradictions/timeline) already succeeded by the time
+ * `case.graph.build` fires, so a broken graph pass must never leave the
+ * case stuck on "Processing" forever once Inngest exhausts its retries.
+ * Same discipline as `failCaseAnalysis` in lib/db/queries/analysis.ts,
+ * except here the right outcome is still "ready" (with an empty/partial
+ * graph) rather than "failed", since the graph is a bonus view on top of
+ * analysis that already completed.
+ */
+export async function markCaseReadyDespiteGraphError(caseId: Types.ObjectId | string) {
+  await connectDB();
+  await Case.updateOne({ _id: caseId }, { $set: { status: "ready" } });
+}
+
+/**
  * Bare, unpopulated entity bundle (string ids, not populated docs) for the
  * graph-build Inngest function's mechanical-edge matching and LLM
  * ref-mapping — deliberately plain data, not the API-response shape

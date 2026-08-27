@@ -45,8 +45,16 @@ export function useCaseStatus(caseId: string, initialData: CaseStatusResponse) {
     initialData,
     refetchInterval: (query) => {
       const data = query.state.data as CaseStatusResponse | undefined;
-      const stillProcessing = data?.documents.some((d) => IN_FLIGHT.has(d.status));
-      return stillProcessing ? 4000 : false;
+      // §Bugfix — this used to stop polling once every *document* settled,
+      // but Case.status doesn't flip to "ready" until analysis + graph
+      // build finish afterward. That gap meant a case sitting between
+      // "documents extracted" and "analysis/graph complete" stopped
+      // refetching, so its badge never updated to "Ready" (or surfaced a
+      // failure) without a manual page reload. Keep polling until the
+      // case itself has actually settled.
+      const documentsInFlight = data?.documents.some((d) => IN_FLIGHT.has(d.status));
+      const caseInFlight = data?.caseStatus === "processing";
+      return documentsInFlight || caseInFlight ? 4000 : false;
     },
   });
 }
