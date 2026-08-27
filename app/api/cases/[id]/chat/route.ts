@@ -9,8 +9,10 @@ import {
 } from "@/lib/db/queries/chat";
 import { embedText } from "@/lib/ai/embeddings";
 import { searchCaseChunks } from "@/lib/ai/vectorSearch";
+import { chunksFromAnalysis } from "@/lib/ai/analysisContext";
 import { generate } from "@/lib/ai/router";
 import { ChatAnswerSchema, buildChatAnswerPrompt } from "@/lib/ai/prompts/chatAnswer";
+import { getCaseAnalysisResponse } from "@/lib/db/queries/analysis";
 import { handleApiError, caseNotFoundResponse } from "@/lib/api/errors";
 
 const MAX_QUESTION_LENGTH = 2000;
@@ -62,13 +64,31 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const userMessage = await saveUserMessage(owner, params.id, question);
 
     try {
-      const [history, queryEmbedding] = await Promise.all([
+      // Only bother pulling the analysis when it's actually finished —
+      // "processing"/"failed"/"not_started" analysis is either incomplete
+      // or absent, and would just add noise (or a misleading half-built
+      // summary) to the prompt rather than grounding it.
+      const analysisReady = caseDoc.analysis?.status === "ready";
+
+      const [history, queryEmbedding, analysis] = await Promise.all([
         getRecentChatHistory(owner, params.id),
         embedText(question),
+        analysisReady ? getCaseAnalysisResponse(owner, params.id) : Promise.resolve(null),
       ]);
 
-      const chunks = await searchCaseChunks(params.id, owner._id, queryEmbedding, 8);
-      const { systemPrompt, userPrompt } = buildChatAnswerPrompt(caseDoc.title, chunks, history, question);
+      const vectorChunks = await searchCaseChunks(params.id, owner._id, queryEmbedding, 8);
+
+      // Bugfix: the chat route used to answer from raw document chunks
+      // only, so meta questions like "what's missing" or "summarize the
+      // timeline" — whose answers live in the case's own analysis output,
+      // not literally in the source text — always fell back to "This
+      // isn't addressed in the uploaded documents", even on fully
+      // analyzed cases. Fold the analysis findings in as citable material
+      // alongside the vector-search chunks. See lib/ai/analysisContext.ts
+      // and lib/ai/prompts/chatAnswer.ts.
+      const chunks = analysis ? [...vectorChunks, ...chunksFromAnalysis(analysis)] : vectorChunks;
+
+      const { systemPrompt, userPrompt } = buildChatAnswerPrompt(caseDoc.title, chunks, history, question, analysis);
 
       const result = await generate({
         systemPrompt,
