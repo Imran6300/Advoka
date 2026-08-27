@@ -40,14 +40,21 @@ export function CaseTabs({
   caseId,
   initialStatus,
   initialAnalysis,
+  hasExtractedDocuments,
 }: {
   caseId: string;
   initialStatus: CaseStatusResponse;
   initialAnalysis: CaseAnalysisResponse | null;
+  // §Bugfix — this used to be computed internally from the static
+  // `initialStatus` server prop and never updated, so Overview/Timeline/
+  // Graph/Chat kept showing "no documents yet" even after a document
+  // actually finished extracting, until a full page reload. The caller
+  // (CaseDetailShell) now derives this from its live status poll and
+  // passes the current value down every render.
+  hasExtractedDocuments: boolean;
 }) {
   const [activeTab, setActiveTab] = useState<TabValue>("overview");
   const [visitedTabs, setVisitedTabs] = useState<Set<TabValue>>(() => new Set<TabValue>(["overview"]));
-  const hasExtractedDocuments = initialStatus.documents.some((d) => d.status === "extracted");
 
   const handleTabChange = useCallback((value: string) => {
     const next = value as TabValue;

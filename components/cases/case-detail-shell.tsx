@@ -35,11 +35,19 @@ export function CaseDetailShell({
 }) {
   const { data } = useCaseStatus(caseId, initialStatus);
   const liveStatus = data?.caseStatus ?? initialStatus.caseStatus;
+  const hasExtractedDocuments = (data?.documents ?? initialStatus.documents).some(
+    (d) => d.status === "extracted"
+  );
 
   return (
     <div className="flex flex-col gap-6">
       <CaseHeader caseData={{ ...headerData, status: liveStatus }} />
-      <CaseTabs caseId={caseId} initialStatus={initialStatus} initialAnalysis={initialAnalysis} />
+      <CaseTabs
+        caseId={caseId}
+        initialStatus={initialStatus}
+        initialAnalysis={initialAnalysis}
+        hasExtractedDocuments={hasExtractedDocuments}
+      />
     </div>
   );
 }

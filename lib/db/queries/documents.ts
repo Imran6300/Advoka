@@ -33,11 +33,16 @@ export async function createDocumentForOwner(owner: IUser, input: CreateDocument
     status: "uploaded",
   });
 
-  // A case with its first document in flight is no longer just a draft.
-  await Case.updateOne(
-    { _id: input.caseId, ownerId: owner._id, status: "draft" },
-    { $set: { status: "processing" } }
-  );
+  // §Bugfix — this used to flip Case.status to "processing" the instant
+  // *any* document was uploaded, regardless of whether analysis had even
+  // been triggered. That made the badge lie: a case sat on "Processing"
+  // indefinitely just because a file existed, even while extraction was
+  // done and analysis hadn't started (and nothing auto-starts it — the
+  // lawyer has to click "Analyze this case"). "Processing" now means what
+  // it says: analysis or graph-build is actually running
+  // (see startCaseAnalysis in lib/db/queries/analysis.ts, the only other
+  // place Case.status changes). A case with uploaded-but-unanalyzed
+  // documents correctly shows "Draft" until the lawyer chooses to analyze.
 
   // Heavy work (extraction/embedding) always runs through Inngest, never
   // inline in an API route (build plan non-negotiable).
