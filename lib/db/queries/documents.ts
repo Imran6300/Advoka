@@ -46,16 +46,45 @@ export async function createDocumentForOwner(owner: IUser, input: CreateDocument
 
   // Heavy work (extraction/embedding) always runs through Inngest, never
   // inline in an API route (build plan non-negotiable).
-  await inngest.send({
-    name: "document.uploaded",
-    data: {
+  //
+  // Bugfix — a failed inngest.send() used to throw out of here AFTER the file
+  // was stored and the Document row created, so the user saw "Upload failed"
+  // (500) while an orphaned "uploaded" document sat in the DB forever. The
+  // most common cause in production is a missing INNGEST_EVENT_KEY. The
+  // upload itself succeeded, so we keep it, flag the document as failed with
+  // an actionable message, and let the existing Retry button re-send.
+  try {
+    await sendDocumentUploadedEvent({
       documentId: String(doc._id),
       caseId: String(input.caseId),
       ownerId: String(owner._id),
-    },
-  });
+    });
+  } catch (err) {
+    console.error("[documents] inngest.send failed for", String(doc._id), err);
+    await Document.updateOne(
+      { _id: doc._id },
+      {
+        $set: {
+          status: "failed",
+          errorMessage:
+            "File saved, but processing couldn't be started. Please use Retry in a moment.",
+        },
+      }
+    );
+    doc.status = "failed";
+    doc.errorMessage =
+      "File saved, but processing couldn't be started. Please use Retry in a moment.";
+  }
 
   return doc;
+}
+
+export async function sendDocumentUploadedEvent(data: {
+  documentId: string;
+  caseId: string;
+  ownerId: string;
+}) {
+  await inngest.send({ name: "document.uploaded", data });
 }
 
 export async function listDocumentsForCase(owner: IUser, caseId: string) {

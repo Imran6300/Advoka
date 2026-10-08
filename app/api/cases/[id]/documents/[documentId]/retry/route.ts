@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOwner } from "@/lib/auth/getOwner";
 import { getCaseForOwner } from "@/lib/db/queries/cases";
-import { getDocumentForOwner } from "@/lib/db/queries/documents";
-import { inngest } from "@/inngest/client";
+import { getDocumentForOwner, sendDocumentUploadedEvent } from "@/lib/db/queries/documents";
+
+export const maxDuration = 30;
 
 export async function POST(
   _req: NextRequest,
@@ -20,18 +21,26 @@ export async function POST(
       return NextResponse.json({ error: "We couldn't find that document." }, { status: 404 });
     }
 
-    document.status = "uploaded";
-    document.errorMessage = undefined;
-    await document.save();
-
-    await inngest.send({
-      name: "document.uploaded",
-      data: {
+    try {
+      await sendDocumentUploadedEvent({
         documentId: String(document._id),
         caseId: params.id,
         ownerId: String(owner._id),
-      },
-    });
+      });
+    } catch (sendErr) {
+      console.error("[retry] inngest.send failed", sendErr);
+      return NextResponse.json(
+        {
+          error:
+            "Background processing isn't reachable right now. Check the INNGEST_EVENT_KEY / INNGEST_SIGNING_KEY settings and try again.",
+        },
+        { status: 502 }
+      );
+    }
+
+    document.status = "uploaded";
+    document.errorMessage = undefined;
+    await document.save();
 
     return NextResponse.json({ document });
   } catch (err) {

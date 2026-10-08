@@ -14,7 +14,7 @@ const SUPABASE_BUCKET = process.env.SUPABASE_BUCKET ?? "documents";
 function getSupabaseAdmin() {
   if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
     throw new Error(
-      "SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set. Add them to your .env.local (see .env.example)."
+      "STORAGE_NOT_CONFIGURED: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY are not set in this environment (Vercel -> Settings -> Environment Variables, then redeploy)."
     );
   }
   return createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
@@ -35,7 +35,13 @@ export async function uploadDocumentBuffer(params: {
   buffer: Buffer;
 }): Promise<string> {
   const supabase = getSupabaseAdmin();
-  const ext = params.originalFilename.split(".").pop() ?? "bin";
+  // Only keep a short, safe extension. The old `split(".").pop()` returned the
+  // WHOLE filename when there was no dot (and kept spaces/unicode/symbols in
+  // it), which produces an invalid Storage object key and a failed upload.
+  const rawExt = params.originalFilename.includes(".")
+    ? (params.originalFilename.split(".").pop() ?? "")
+    : "";
+  const ext = rawExt.toLowerCase().replace(/[^a-z0-9]/g, "").slice(0, 8) || "bin";
   const path = `${params.ownerId}/${params.caseId}/${randomUUID()}.${ext}`;
 
   const { error } = await supabase.storage.from(SUPABASE_BUCKET).upload(path, params.buffer, {
@@ -44,7 +50,13 @@ export async function uploadDocumentBuffer(params: {
   });
 
   if (error) {
-    throw new Error(`Supabase upload failed: ${error.message}`);
+    const msg = error.message ?? "";
+    if (/bucket not found/i.test(msg)) {
+      throw new Error(
+        `STORAGE_BUCKET_MISSING: bucket "${SUPABASE_BUCKET}" does not exist in Supabase. Create it (Storage -> New bucket) or fix SUPABASE_BUCKET.`
+      );
+    }
+    throw new Error(`STORAGE_UPLOAD_FAILED: ${msg}`);
   }
 
   return path;
