@@ -168,3 +168,121 @@ export async function insertDocumentChunks(
   await DocumentChunk.insertMany(chunks);
 }
 
+
+/**
+ * Idempotent per-batch chunk write, keyed on (documentId, chunkIndex). Safe if
+ * an Inngest step is retried after a partial success — no duplicate chunks.
+ */
+export async function upsertDocumentChunks(
+  chunks: Array<{
+    documentId: Types.ObjectId | string;
+    caseId: Types.ObjectId | string;
+    ownerId: Types.ObjectId | string;
+    chunkIndex: number;
+    pageNumber: number;
+    text: string;
+    embedding: number[];
+  }>
+) {
+  if (chunks.length === 0) return;
+  await connectDB();
+  await DocumentChunk.bulkWrite(
+    chunks.map((c) => ({
+      updateOne: {
+        filter: { documentId: c.documentId, chunkIndex: c.chunkIndex },
+        update: {
+          $set: {
+            caseId: c.caseId,
+            ownerId: c.ownerId,
+            pageNumber: c.pageNumber,
+            text: c.text,
+            embedding: c.embedding,
+          },
+        },
+        upsert: true,
+      },
+    })),
+    { ordered: false }
+  );
+}
+
+/**
+ * Registers documents the browser already uploaded straight to storage:
+ * one insertMany + ONE batched Inngest send, instead of a DB write and an
+ * event round-trip per file.
+ */
+export async function registerUploadedDocuments(
+  owner: IUser,
+  caseId: string,
+  items: Array<{ path: string; filename: string; mimeType: string; sizeBytes: number }>
+) {
+  if (items.length === 0) return [];
+  await connectDB();
+
+  const existing = await Document.find({
+    ownerId: owner._id,
+    caseId,
+    storageUrl: { $in: items.map((i) => i.path) },
+  })
+    .select("storageUrl")
+    .lean<Array<{ storageUrl: string }>>();
+  const already = new Set(existing.map((d) => d.storageUrl));
+  const fresh = items.filter((i) => !already.has(i.path)); // double-submit guard
+  if (fresh.length === 0) return [];
+
+  const docs = await Document.insertMany(
+    fresh.map((i) => ({
+      ownerId: owner._id,
+      caseId,
+      originalFilename: i.filename,
+      mimeType: i.mimeType,
+      sizeBytes: i.sizeBytes,
+      storageUrl: i.path,
+      status: "uploaded",
+    }))
+  );
+
+  try {
+    await inngest.send(
+      docs.map((d) => ({
+        name: "document.uploaded" as const,
+        data: { documentId: String(d._id), caseId: String(caseId), ownerId: String(owner._id) },
+      }))
+    );
+  } catch (err) {
+    console.error("[documents] batched inngest.send failed", err);
+    const message = "File saved, but processing couldn't be started. Please use Retry in a moment.";
+    await Document.updateMany({ _id: { $in: docs.map((d) => d._id) } }, { $set: { status: "failed", errorMessage: message } });
+    for (const d of docs) {
+      d.status = "failed";
+      d.errorMessage = message;
+    }
+  }
+
+  return docs;
+}
+
+/**
+ * Safety net: a document stuck in uploaded/extracting for far longer than any
+ * real run (Inngest retries exhausted, function killed) is marked failed so
+ * the UI stops spinning/polling forever and the Retry button appears.
+ */
+export async function failStaleDocuments(owner: IUser, caseId: string, olderThanMs = 15 * 60_000) {
+  await connectDB();
+  if (!Types.ObjectId.isValid(caseId)) return;
+  const res = await Document.updateMany(
+    {
+      caseId,
+      ownerId: owner._id,
+      status: { $in: ["uploaded", "extracting"] },
+      updatedAt: { $lt: new Date(Date.now() - olderThanMs) },
+    },
+    {
+      $set: {
+        status: "failed",
+        errorMessage: "Processing took too long and was stopped. Please try again.",
+      },
+    }
+  );
+  if (res.modifiedCount > 0) await recalculateCaseDocumentStats(caseId);
+}

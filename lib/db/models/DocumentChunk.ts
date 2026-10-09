@@ -4,6 +4,7 @@ export interface IDocumentChunk extends MongoDocument {
   documentId: Types.ObjectId;
   caseId: Types.ObjectId;
   ownerId: Types.ObjectId;
+  chunkIndex?: number;
   pageNumber: number;
   text: string;
   embedding: number[];
@@ -15,6 +16,9 @@ const DocumentChunkSchema = new Schema<IDocumentChunk>(
     documentId: { type: Schema.Types.ObjectId, ref: "Document", required: true, index: true },
     caseId: { type: Schema.Types.ObjectId, ref: "Case", required: true, index: true },
     ownerId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    // Position within the document — lets embedding batches upsert
+    // idempotently if an Inngest step is retried.
+    chunkIndex: { type: Number },
     pageNumber: { type: Number, required: true },
     text: { type: String, required: true },
     // 384-dim — output of the quantized all-MiniLM-L6-v2 model used in
@@ -26,6 +30,7 @@ const DocumentChunkSchema = new Schema<IDocumentChunk>(
 );
 
 DocumentChunkSchema.index({ caseId: 1, documentId: 1 });
+DocumentChunkSchema.index({ documentId: 1, chunkIndex: 1 });
 
 export const DocumentChunk =
   models.DocumentChunk || model<IDocumentChunk>("DocumentChunk", DocumentChunkSchema);

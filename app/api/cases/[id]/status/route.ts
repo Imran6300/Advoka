@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getOwner } from "@/lib/auth/getOwner";
 import { getCaseForOwner } from "@/lib/db/queries/cases";
-import { listDocumentsForCase } from "@/lib/db/queries/documents";
+import { listDocumentsForCase, failStaleDocuments } from "@/lib/db/queries/documents";
 
 export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -11,6 +11,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ error: "We couldn't find that case." }, { status: 404 });
     }
 
+    await failStaleDocuments(owner, params.id);
     const documents = await listDocumentsForCase(owner, params.id);
 
     return NextResponse.json({

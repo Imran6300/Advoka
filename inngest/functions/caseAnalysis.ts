@@ -51,6 +51,9 @@ export const caseAnalysis = inngest.createFunction(
     // across cases don't multiply that out and burn through every free-tier
     // provider's rate limit at once.
     concurrency: { limit: 3 },
+    // LLM failures already walk every provider inside generate(); retrying the
+    // whole step 4 more times just multiplies the wait before the user sees a result.
+    retries: 2,
   },
   { event: "case.analyze.requested" },
   async ({ event, step }) => {
@@ -73,24 +76,18 @@ export const caseAnalysis = inngest.createFunction(
     });
 
     try {
-      // Re-running analysis (idempotent trigger) replaces prior output rather
-      // than duplicating it.
-      await step.run("reset-previous-output", async () => {
+      // reset + preflight + build-context merged into ONE step
+      // (3 Inngest round trips -> 1). Idempotent trigger: re-running replaces
+      // prior output rather than duplicating it.
+      const context = await step.run("prepare", async () => {
         await clearCaseAnalysisOutput(caseId);
         await startCaseAnalysis(caseId);
-      });
 
-      // Documents received / text extracted / documents indexed are already
-      // true by the time this event fires (Day 3's pipeline is a
-      // precondition for analysis) — mark them done immediately so the
-      // checklist reflects real state from the first poll.
-      await step.run("mark-preflight-steps-done", async () => {
+        // Already true by the time this event fires — mark done immediately.
         await setAnalysisStep(caseId, "documentsReceived", "done");
         await setAnalysisStep(caseId, "textExtracted", "done");
         await setAnalysisStep(caseId, "documentsIndexed", "done");
-      });
 
-      const context = await step.run("build-context", async () => {
         const ctx = await buildCaseAnalysisContext(caseId, ownerId);
         if (ctx.totalChunks === 0) {
           throw new Error("No indexed document text found for this case.");
@@ -98,8 +95,12 @@ export const caseAnalysis = inngest.createFunction(
         return ctx;
       });
 
+      // The three LLM passes only depend on `context`, not on each other, so
+      // they run CONCURRENTLY (each is its own step). Wall time is now the
+      // slowest single call instead of the sum of all three.
+      const [factsResult] = await Promise.all([
       // --- Step: Finding key facts (summary + facts/people/evidence + missing info) ---
-      const factsResult = await step.run("finding-facts", async () => {
+        step.run("finding-facts", async () => {
         await setAnalysisStep(caseId, "findingFacts", "active");
 
         const { systemPrompt, userPrompt } = buildFactsAndSummaryPrompt(
@@ -144,10 +145,10 @@ export const caseAnalysis = inngest.createFunction(
 
         await setAnalysisStep(caseId, "findingFacts", "done");
         return { summary: result.summary };
-      });
+      }),
 
       // --- Step: Detecting contradictions ---
-      await step.run("detecting-contradictions", async () => {
+        step.run("detecting-contradictions", async () => {
         await setAnalysisStep(caseId, "detectingContradictions", "active");
 
         const { systemPrompt, userPrompt } = buildContradictionsPrompt(
@@ -182,10 +183,10 @@ export const caseAnalysis = inngest.createFunction(
         );
 
         await setAnalysisStep(caseId, "detectingContradictions", "done");
-      });
+      }),
 
       // --- Step: Building timeline (+ deadlines) ---
-      await step.run("building-timeline", async () => {
+        step.run("building-timeline", async () => {
         await setAnalysisStep(caseId, "buildingTimeline", "active");
 
         const { systemPrompt, userPrompt } = buildTimelineAndDeadlinesPrompt(
@@ -229,7 +230,8 @@ export const caseAnalysis = inngest.createFunction(
         );
 
         await setAnalysisStep(caseId, "buildingTimeline", "done");
-      });
+      }),
+      ]);
 
       await step.run("finalize", async () => {
         await recalculateCaseAnalysisStats(caseId);
